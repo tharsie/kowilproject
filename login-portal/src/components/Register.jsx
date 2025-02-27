@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 const Register = () => {
@@ -11,30 +12,59 @@ const Register = () => {
   const [error, setError] = useState("");
   const [phoneError, setPhoneError] = useState(""); // Added phoneError state
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate(); // Initialize navigate function
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!firstName || !lastName || !phoneNumber || !email || !password || !confirmPassword) {
-      setError("All fields are required!");
-      return;
+        setError("All fields are required!");
+        return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match!");
-      return;
+        setError("Passwords do not match!");
+        return;
     }
 
     const phoneRegex = /^07\d{8}$/;
     if (!phoneRegex.test(phoneNumber)) {
-      setPhoneError("Phone number must start with 07 and contain 10 digits.");
-      return;
+        setPhoneError("Phone number must start with 07 and contain 10 digits.");
+        return;
     }
 
-    setPhoneError(""); // Clear phone error if valid
-    setError(""); // Clear other errors
+    setPhoneError("");
+    setError("");
 
-    console.log("Registration Successful", { firstName, lastName, phoneNumber, email, password });
-  };
+    try {
+        const response = await fetch("http://localhost:3000/api/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                firstName,
+                lastName,
+                phoneNumber,
+                email,
+                password,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            setError(data.error || "Registration failed!");
+        } else {
+            console.log("Registration Successful:", data);
+            alert("User registered successfully!");
+            navigate("/login"); 
+        }
+    } catch (error) {
+        console.error("Error during registration:", error);
+        setError("Something went wrong. Please try again.");
+    }
+    
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-300">

@@ -10,7 +10,7 @@ import Receipt from "./components/Receipt";
 import Transaction from "./components/Transaction";
 import Settings from "./components/Settings";
 import ReceiptTypeSettings from "./components/ReceiptTypeSettings";
-
+import DashboardOverview from "./components/DashboardOverview";
 const App = () => {
   return (
     <ReceiptProvider>
@@ -25,6 +25,8 @@ const App = () => {
             <Route path="member" element={<Member />} />
             <Route path="receipt" element={<Receipt />} />
             <Route path="transaction" element={<Transaction />} />
+            <Route index element={<DashboardOverview />} /> {/* Default route to show the overview */}
+          <Route path="overview" element={<DashboardOverview />} /> {/* For navigating to /dashboard/overview */}
             
             {/* Settings and nested routes */}
             <Route path="settings" element={<Settings />}>

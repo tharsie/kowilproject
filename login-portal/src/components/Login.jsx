@@ -8,18 +8,45 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();  // Create navigate function
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError("Both fields are required!");
-      return;
-    }
-    setError("");
-    console.log("Login Successful", { email, password });
 
-    // Navigate to Dashboard after successful login
-    navigate("/dashboard");  // Redirects to the Dashboard page
-  };
+    if (!email || !password) {
+        setError("Both fields are required!");
+        return;
+    }
+
+    setError("");
+
+    try {
+        const response = await fetch("http://localhost:3000/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            setError(data.error || "Login failed. Please check your credentials.");
+        } else {
+            console.log("Login Successful:", data);
+            alert("Login successful!");
+            
+            // Store token (if backend sends it)
+            localStorage.setItem("token", data.token);
+
+            // Navigate to the dashboard
+            navigate("/dashboard");
+        }
+    } catch (error) {
+        console.error("Error during login:", error);
+        setError("Something went wrong. Please try again.");
+    }
+};
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-300">

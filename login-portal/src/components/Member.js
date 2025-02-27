@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const Member = () => {
-  const [showForm, setShowForm] = useState(false); 
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [members, setMembers] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
 
@@ -19,33 +19,80 @@ const Member = () => {
   const [province, setProvince] = useState("");
   const [country, setCountry] = useState("");
 
-  // Handle form submit
-  const handleSubmit = (e) => {
+  // Fetch members from the backend on initial load
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/members");
+        const result = await response.json();
+        if (response.ok) {
+          setMembers(result);
+        } else {
+          console.error("Error fetching members:", result.error);
+        }
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      }
+    };
+    fetchMembers();
+  }, []);
+
+  // Handle form submit (Add or Update member)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newMember = { title, firstName, lastName, email, mobile, dob, gender, street, city, province, country};
+    const newMember = { title, firstName, lastName, email, mobile, dob, gender, street, city, province, country };
 
     if (editIndex !== null) {
-      const updatedMembers = [...members];
-      updatedMembers[editIndex] = newMember;
-      setMembers(updatedMembers);
-      setEditIndex(null);
+      // Update member
+      try {
+        const response = await fetch(`http://localhost:3000/api/members/${members[editIndex].id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMember),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert(result.message); // Success message from server
+          setMembers(members.map((member, index) => (index === editIndex ? newMember : member))); // Update local state
+        } else {
+          alert(result.error); // Error message from server
+        }
+      } catch (error) {
+        console.error("Error updating member:", error);
+        alert("Error updating member");
+      }
     } else {
-      setMembers([...members, newMember]);
+      // Add new member
+      try {
+        const response = await fetch("http://localhost:3000/api/members", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newMember),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert(result.message); // Success message from server
+          setMembers([...members, result.newMember]); // Add new member to local state
+        } else {
+          alert(result.error); // Error message from server
+        }
+      } catch (error) {
+        console.error("Error adding member:", error);
+        alert("Error adding member");
+      }
     }
 
     // Reset form and close it
     setShowForm(false);
-    setTitle("Mr");
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setMobile("");
-    setDob("");
-    setGender("Male");
-    setStreet("");
-    setCity("");
-    setProvince("");
-    setCountry("");
+    resetForm();
   };
 
   // Handle edit
@@ -67,8 +114,40 @@ const Member = () => {
   };
 
   // Handle delete
-  const handleDelete = (index) => {
-    setMembers(members.filter((_, i) => i !== index));
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/members/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data.message); // Handle success (e.g., show success message)
+      } else {
+        const errorData = await response.json();
+        console.error("Error:", errorData.error);
+        alert(errorData.error || "Error deleting member");
+      }
+    } catch (err) {
+      console.error("Error deleting member:", err);
+      alert("An unexpected error occurred");
+    }
+  };
+  
+
+  // Reset the form fields
+  const resetForm = () => {
+    setTitle("Mr");
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setMobile("");
+    setDob("");
+    setGender("Male");
+    setStreet("");
+    setCity("");
+    setProvince("");
+    setCountry("");
   };
 
   // Filter members based on search query
@@ -142,20 +221,33 @@ const Member = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg w-66">
             <h3 className="text-xl font-semibold mb-4">{editIndex !== null ? "Edit Member" : "Add Member"}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
-              
               <div className="flex space-x-2">
                 <select value={title} onChange={(e) => setTitle(e.target.value)} className="p-2 border rounded-md">
                   <option value="Mr">Mr</option>
                   <option value="Mrs">Mrs</option>
                   <option value="Miss">Miss</option>
                 </select>
-                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required placeholder="First Name" className="p-2 border rounded-md flex-grow" />
-                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required placeholder="Last Name" className="p-2 border rounded-md flex-grow" />
-              </div> 
+                <input 
+                  type="text" 
+                  value={firstName} 
+                  onChange={(e) => 
+                  setFirstName(e.target.value)} 
+                  required placeholder="First Name" 
+                  className="p-2 border rounded-md flex-grow" 
+                />
+                <input 
+                  type="text" 
+                  value={lastName} 
+                  onChange={(e) => 
+                  setLastName(e.target.value)} 
+                  required placeholder="Last Name" 
+                  className="p-2 border rounded-md flex-grow" 
+                />
+              </div>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email" className="p-2 border rounded-md w-full" />
               <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} required placeholder="Mobile" maxLength="10" className="p-2 border rounded-md w-full" />
               <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} required className="p-2 border rounded-md w-67" />
-              
+
               <div className="flex space-x-4">
                 <label>
                   <input type="radio" value="Male" checked={gender === "Male"} onChange={(e) => setGender(e.target.value)} /> Male
@@ -164,14 +256,14 @@ const Member = () => {
                   <input type="radio" value="Female" checked={gender === "Female"} onChange={(e) => setGender(e.target.value)} /> Female
                 </label>
               </div>
-              <h1 className = "font-bold" >Address</h1>
-              <div className="flex space-x-2" >
-              <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} required placeholder="Street" className="p-2 border rounded-md flex-full" />
-              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required placeholder="City" className="p-2 border rounded-md flex-full" />
+              <h1 className="font-bold">Address</h1>
+              <div className="flex space-x-2">
+                <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} required placeholder="Street" className="p-2 border rounded-md flex-full" />
+                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} required placeholder="City" className="p-2 border rounded-md flex-full" />
               </div>
               <div className="flex space-x-2">
-              <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} required placeholder="Province" className="p-2 border rounded-md w-86 flex-full" />
-              <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} required placeholder="Country" className="p-2 border rounded-md w-86 flex-full" />
+                <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} required placeholder="Province" className="p-2 border rounded-md w-86 flex-full" />
+                <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} required placeholder="Country" className="p-2 border rounded-md w-86 flex-full" />
               </div>
 
               {/* Submit & Cancel Buttons */}

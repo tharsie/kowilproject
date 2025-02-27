@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useReceiptContext } from "../context/ReceiptContext"; // ✅ Correct import
 
 const ReceiptTypeSettings = () => {
@@ -17,9 +17,28 @@ const ReceiptTypeSettings = () => {
   const [newSequenceError, setNewSequenceError] = useState("");
   const [priceError, setPriceError] = useState(""); // Added error state for price validation
 
-  const addReceiptType = () => {
+  useEffect(() => {
+    const fetchReceiptTypes = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/receipt-types");
+        if (!response.ok) {
+          throw new Error("Failed to fetch receipt types");
+        }
+
+        const data = await response.json();
+        setReceiptTypes(data);
+      } catch (err) {
+        console.error("Error fetching receipt types:", err);
+      }
+    };
+
+    fetchReceiptTypes();
+  }, [setReceiptTypes]);
+
+  const addReceiptType = async () => {
     // Validation
     let valid = true;
+
     if (!newType.trim()) {
       setNewTypeError("Receipt Type Name is required!");
       valid = false;
@@ -34,6 +53,16 @@ const ReceiptTypeSettings = () => {
       setNewSequenceError("");
     }
 
+    // Extract numeric part for sequence_num
+    const extractedNumber = parseInt(newSequence.replace(/\D/g, ""), 10); // Remove non-numeric characters
+
+    if (isNaN(extractedNumber)) {
+      setNewSequenceError("Sequence must contain at least one number!");
+      valid = false;
+    } else {
+      setNewSequenceError("");
+    }
+
     if (priceType === "multiple" && prices.some((price) => price.trim() === "")) {
       setPriceError("All price fields are required for multiple prices.");
       valid = false;
@@ -43,15 +72,48 @@ const ReceiptTypeSettings = () => {
 
     if (!valid) return;
 
-    const newPrice = priceType === "single" ? prices[0] : prices;
-    setReceiptTypes([
-      ...receiptTypes,
-      { name: newType, price: newPrice, sequence: newSequence },
-    ]);
-    setNewType("");
-    setPrices([""]);
-    setNewSequence("");
-    setShowModal(false);
+    // Prepare the data to send to the backend
+    const receiptData = {
+      name: newType,
+      price_type: priceType,
+      sequence_txt: newSequence, // Keep the original input (text + numbers)
+      sequence_num: extractedNumber, // Use only numbers for sequence_num
+    };
+
+    try {
+      // Send POST request to the backend
+      const response = await fetch("http://localhost:3000/api/receipt-types", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(receiptData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data.message);
+
+        // Update the state with the new receipt type
+        setReceiptTypes((prevReceiptTypes) => [
+          ...prevReceiptTypes,
+          { name: newType, price_type: priceType, sequence: newSequence },
+        ]);
+
+        // Reset fields
+        setNewType("");
+        setPrices([""]);
+        setNewSequence("");
+        setShowModal(false);
+      } else {
+        const errorData = await response.json();
+        console.error(errorData.error);
+        alert("Error adding receipt type: " + errorData.error);
+      }
+    } catch (error) {
+      console.error("Error connecting to backend:", error);
+      alert("Network error. Please try again.");
+    }
   };
 
   const editReceiptType = () => {
@@ -157,33 +219,39 @@ const ReceiptTypeSettings = () => {
         <thead>
           <tr>
             <th className="border p-2">Receipt Type</th>
-            <th className="border p-2">Price</th>
+            <th className="border p-2">Price Type</th>
             <th className="border p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {filteredReceiptTypes.map((type, index) => (
-            <tr key={index}>
-              <td className="border p-2">{type.name}</td>
-              <td className="border p-2">
-                {Array.isArray(type.price) ? type.price.join(", ") : type.price}
-              </td>
-              <td className="border p-2">
-                <button
-                  onClick={() => handleEdit(type)}
-                  className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteReceiptType(type.name)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
+          {filteredReceiptTypes.length === 0 ? (
+            <tr>
+              <td colSpan="3" className="text-center p-2">No receipt types found.</td>
             </tr>
-          ))}
+          ) : (
+            filteredReceiptTypes.map((type, index) => (
+              <tr key={index}>
+                <td className="border p-2">{type.name}</td>
+                <td className="border p-2">
+                  {Array.isArray(type.price) ? type.price.join(", ") : type.price}
+                </td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => handleEdit(type)}
+                    className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteReceiptType(type.name)}
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
@@ -268,13 +336,13 @@ const ReceiptTypeSettings = () => {
                   className="border p-2 rounded w-1/4"
                   value={newSequence.split('-')[1] || ''}
                   onChange={(e) => handleSequenceChange(newSequence.split('-')[0] || '', e.target.value)}
-                  placeholder="0001"
+                  placeholder="001"
                 />
               </div>
               {newSequenceError && <p className="text-red-500 text-sm">{newSequenceError}</p>}
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
                 className="bg-gray-500 text-white px-4 py-2 rounded"
@@ -285,7 +353,7 @@ const ReceiptTypeSettings = () => {
                 onClick={editMode ? editReceiptType : addReceiptType}
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
-                {editMode ? "Save Changes" : "Add"}
+                {editMode ? "Save Changes" : "Add Receipt Type"}
               </button>
             </div>
           </div>
