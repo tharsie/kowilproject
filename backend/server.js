@@ -5,6 +5,8 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
+app.use(express.json());
+
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -28,54 +30,132 @@ const dbConfig = {
 //adding members
 // Route to handle POST request for adding a member
 app.post("/api/members", async (req, res) => {
-  const { title, firstName, lastName, email, mobile, dob, gender, street, city, province, country } = req.body;
+  const {
+    title,
+    firstName,
+    lastName,
+    dob,
+    gender,
+    phoneNumber,
+    email,
+    street,
+    city,
+    state,
+    postalCode,
+    country,
+  } = req.body;
 
-  // Check if all fields are provided
-  if (!title || !firstName || !lastName || !email || !mobile || !dob || !gender || !street || !city || !province || !country) {
+  // Validate required fields
+  if (
+    !title ||
+    !firstName ||
+    !lastName ||
+    !dob ||
+    !gender ||
+    !phoneNumber ||
+    !email ||
+    !street ||
+    !city ||
+    !state ||
+    !postalCode ||
+    !country
+  ) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    // Connect to the MS SQL Server
+    // Connect to MS SQL Server
     await sql.connect(dbConfig);
+    const transaction = new sql.Transaction();
 
-    // SQL query to insert a new member into the database
-    const query = `
-      INSERT INTO Members (title, firstName, lastName, email, mobile, dob, gender, street, city, province, country)
-      VALUES (@title, @firstName, @lastName, @email, @mobile, @dob, @gender, @street, @city, @province, @country);
-    `;
+    try {
+      await transaction.begin();
 
-    // Prepare and execute the SQL query with parameterized values
-    await sql.query(`
-      DECLARE @title NVARCHAR(50), @firstName NVARCHAR(100), @lastName NVARCHAR(100), @email NVARCHAR(100),
-              @mobile NVARCHAR(20), @dob DATE, @gender NVARCHAR(10), @street NVARCHAR(255), @city NVARCHAR(100),
-              @province NVARCHAR(100), @country NVARCHAR(100);
-              
-      SET @title = '${title}';
-      SET @firstName = '${firstName}';
-      SET @lastName = '${lastName}';
-      SET @email = '${email}';
-      SET @mobile = '${mobile}';
-      SET @dob = '${dob}';
-      SET @gender = '${gender}';
-      SET @street = '${street}';
-      SET @city = '${city}';
-      SET @province = '${province}';
-      SET @country = '${country}';
+      // Insert into tblMember and retrieve MemberId
+      const memberResult = await transaction.request()
+        .input("Title", sql.NVarChar(50), title)
+        .input("FirstName", sql.NVarChar(100), firstName)
+        .input("LastName", sql.NVarChar(100), lastName)
+        .input("DOB", sql.Date, dob)
+        .input("Gender", sql.NVarChar(10), gender)
+        .input("PhoneNumber", sql.NVarChar(20), phoneNumber)
+        .input("Email", sql.NVarChar(100), email)
+        .input("IsEdit", sql.Int, 1)
+        .input("IsActive", sql.Int, 1)
+        .input("CreatedDate", sql.DateTime, new Date())
+        .input("CreatedBy", sql.NVarChar(100), "Admin")
+        .input("UpdatedDate", sql.DateTime, new Date())
+        .input("UpdatedBy", sql.NVarChar(100), "Admin")
+        .query(`
+          INSERT INTO tblMember (Title, FirstName, LastName, DOB, Gender, PhoneNumber, Email, 
+                                 IsEdit, IsActive, CreatedDate, CreatedBy, UpdatedDate, UpdatedBy)
+          OUTPUT INSERTED.MemberId
+          VALUES (@Title, @FirstName, @LastName, @DOB, @Gender, @PhoneNumber, @Email,
+                  @IsEdit, @IsActive, @CreatedDate, @CreatedBy, @UpdatedDate, @UpdatedBy);
+        `);
 
-      ${query}
-    `);
+      const memberId = memberResult.recordset[0].MemberId; // Get inserted MemberId
 
-    // Respond with a success message
-    res.status(201).json({ message: "Member added successfully!" });
+      // Insert into tblAddress and retrieve AddressId
+      const addressResult = await transaction.request()
+        .input("Street", sql.NVarChar(255), street)
+        .input("City", sql.NVarChar(100), city)
+        .input("State", sql.NVarChar(100), state)
+        .input("PostalCode", sql.NVarChar(20), postalCode)
+        .input("Country", sql.NVarChar(100), country)
+        .query(`
+          INSERT INTO tblAddress (Street, City, State, PostalCode, Country)
+          OUTPUT INSERTED.AddressId
+          VALUES (@Street, @City, @State, @PostalCode, @Country);
+        `);
+
+      const addressId = addressResult.recordset[0].AddressId; // Get inserted AddressId
+
+      // Now update both tables with the corresponding foreign keys
+      // Update tblMember with the AddressId
+      await transaction.request()
+        .input("MemberId", sql.Int, memberId)
+        .input("AddressId", sql.Int, addressId)
+        .query(`
+          UPDATE tblMember
+          SET AddressId = @AddressId
+          WHERE MemberId = @MemberId;
+        `);
+
+      // Update tblAddress with the MemberId
+      await transaction.request()
+        .input("AddressId", sql.Int, addressId)
+        .input("MemberId", sql.Int, memberId)
+        .query(`
+          UPDATE tblAddress
+          SET MemberId = @MemberId
+          WHERE AddressId = @AddressId;
+        `);
+
+      // Commit the transaction
+      await transaction.commit();
+
+      // Respond with the newly inserted member and their address ID
+      res.status(201).json({ 
+        message: "Member and address added successfully!", 
+        memberId: memberId, 
+        addressId: addressId 
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction Error:", error);
+      res.status(500).json({ error: "Database transaction error" });
+    }
   } catch (err) {
-    console.error("Error inserting member:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
   } finally {
-    // Close the database connection
     sql.close();
   }
 });
+
+
+
 
 // Route to fetch all members
 app.get("/api/members", async (req, res) => {
@@ -83,10 +163,34 @@ app.get("/api/members", async (req, res) => {
     // Connect to the MS SQL Server
     await sql.connect(dbConfig);
 
-    // Query to get all members from the database
-    const result = await sql.query("SELECT * FROM members ");
+    // Query to get all members with their address details
+    const result = await sql.query(`
+      SELECT 
+        m.MemberId, 
+        m.Title, 
+        m.FirstName, 
+        m.LastName, 
+        m.DOB, 
+        m.Gender, 
+        m.PhoneNumber, 
+        m.Email, 
+        m.IsEdit, 
+        m.IsActive, 
+        m.CreatedDate, 
+        m.CreatedBy, 
+        m.UpdatedDate, 
+        m.UpdatedBy,
+        a.AddressId, 
+        a.Street, 
+        a.City, 
+        a.State, 
+        a.PostalCode, 
+        a.Country
+      FROM tblMember m
+      LEFT JOIN tblAddress a ON m.AddressId = a.AddressId
+    `);
 
-    // Respond with the list of members
+    // Respond with the combined list of members and their addresses
     res.status(200).json(result.recordset); // result.recordset contains the rows returned
   } catch (err) {
     console.error("Error fetching members:", err);
@@ -96,6 +200,7 @@ app.get("/api/members", async (req, res) => {
     sql.close();
   }
 });
+
 
 // Route to update member details
 app.put("/api/members/:id", async (req, res) => {
@@ -196,33 +301,36 @@ app.post("/api/register", async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
   if (!firstName || !lastName || !phoneNumber || !email || !password) {
-      return res.status(400).json({ error: "All fields are required!" });
+    return res.status(400).json({ error: "All fields are required!" });
   }
 
   try {
-      await sql.connect(dbConfig);
+    await sql.connect(dbConfig);
 
-      // Check if email exists
-      const result = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
-      if (result.recordset.length > 0) {
-          return res.status(400).json({ error: "Email already registered!" });
-      }
+    // Check if email already exists
+    const result = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+    if (result.recordset.length > 0) {
+      return res.status(400).json({ error: "Email already registered!" });
+    }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      await sql.query`
-          INSERT INTO Users (firstName, lastName, phoneNumber, email, password)
-          VALUES (${firstName}, ${lastName}, ${phoneNumber}, ${email}, ${hashedPassword})
-      `;
+    // Insert user with ClientId = 1
+    await sql.query`
+      INSERT INTO Users (firstName, lastName, phoneNumber, email, password, ClientId)
+      VALUES (${firstName}, ${lastName}, ${phoneNumber}, ${email}, ${hashedPassword}, 1)
+    `;
 
-      res.status(201).json({ message: "User registered successfully!" });
+    res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
-      console.error("Error during registration:", err);
-      res.status(500).json({ error: "Database error!" });
+    console.error("Error during registration:", err);
+    res.status(500).json({ error: "Database error!" });
   } finally {
-      sql.close();
+    sql.close();
   }
 });
+
 
 //login user
 

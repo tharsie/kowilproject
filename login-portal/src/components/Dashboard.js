@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import DashboardOverview from "./DashboardOverview"; // Import the overview component
 
 const Dashboard = () => {
   const [receiptTypes, setReceiptTypes] = useState([]);
@@ -15,17 +14,11 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-800 text-white flex flex-col">
-        
+      <div className="fixed w-64 bg-gray-800 text-white flex flex-col h-full">
         <ul className="space-y-4 mt-4 flex-grow">
           <li>
-          <div className="p-4 text-3xl font-bold">
-            <Link
-              to="overview"
-              
-            >
-              Admin Dashboard
-            </Link>
+            <div className="p-4 text-3xl font-bold">
+              <Link to="overview">Admin Dashboard</Link>
             </div>
           </li>
           <li>
@@ -73,7 +66,7 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6">
+      <div className="ml-64 flex-1 p-6">
         <Outlet context={{ receiptTypes, setReceiptTypes }} />
       </div>
     </div>
