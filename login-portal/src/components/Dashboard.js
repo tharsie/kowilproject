@@ -14,19 +14,29 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <div className="fixed w-64 bg-white-800 text-white flex flex-col h-full border-r-2 border-gray-300">
+      <div className="fixed w-[250px] bg-white-800 text-white flex flex-col h-full border-r-2 border-gray-300">
         <ul className="space-y-4 mt-4 flex-grow">
           <li>
-            <div className="text-white p-7 border-b-2 w-full -mt-14 border-gray-300">
-            <div className="p-3 text-6xl pt-7 font-bold h-[89px] text-[#FD9400]">
-              <Link to="overview">Logo</Link>
+            <div className="text-white p-7  -mt-14 border-gray-300">
+            <div className="p-3 text-6xl pt-5 font-bold h-[89px] text-[#FD9400]">
+              <h1>Logo</h1>
             </div>
             </div>
           </li>
           <li className="text-black">
             <Link
+              to="overview"
+              className="block cursor-pointer font-bold p-4 hover:bg-[#FD940012]"
+
+            >
+              Dashboard
+            </Link>
+          </li>
+          <li className="text-black">
+            <Link
               to="member"
-              className="block cursor-pointer font-bold p-4 hover:bg-gray-700"
+              className="block cursor-pointer font-bold p-4 hover:bg-[#FD940012]"
+
             >
               Member
             </Link>
@@ -34,7 +44,7 @@ const Dashboard = () => {
           <li className="text-black">
             <Link
               to="receipt"
-              className="block cursor-pointer font-bold p-4 hover:bg-gray-700"
+              className="block cursor-pointer font-bold p-4 hover:bg-[#FD940012]"
             >
               Receipt
             </Link>
@@ -42,7 +52,7 @@ const Dashboard = () => {
           <li className="text-black">
             <Link
               to="transaction"
-              className="block cursor-pointer font-bold p-4 hover:bg-gray-700"
+              className="block cursor-pointer font-bold p-4 hover:bg-[#FD940012]"
             >
               Transaction
             </Link>
@@ -50,7 +60,7 @@ const Dashboard = () => {
           <li className="text-black">
             <Link
               to="settings"
-              className="block cursor-pointer font-bold p-4 hover:bg-gray-700"
+              className="block cursor-pointer font-bold p-4 hover:bg-[#FD940012]"
             >
               Settings
             </Link>
