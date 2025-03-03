@@ -368,11 +368,9 @@ app.post("/api/login", async (req, res) => {
 });
 
 //receipt type
-//add type
 app.post("/api/receipt-types", async (req, res) => {
   const { name, price_type, sequence_txt, sequence_num } = req.body;
 
-  // Validate input
   if (!name || !price_type || !sequence_txt || !sequence_num) {
     return res.status(400).json({ error: "All fields are required" });
   }
@@ -380,33 +378,50 @@ app.post("/api/receipt-types", async (req, res) => {
   try {
     // Connect to the MS SQL Server
     await sql.connect(dbConfig);
+    const transaction = new sql.Transaction();
 
-    // Define SQL query with parameters
-    const query = `
-      INSERT INTO receipt_types (name, price_type, sequence_txt, sequence_num)
-      VALUES (@name, @price_type, @sequence_txt, @sequence_num);
+    await transaction.begin();
+
+    // Insert into receipt_types and retrieve the inserted ID
+    const receiptTypeQuery = `
+      INSERT INTO receipt_types (name, price_type)
+      OUTPUT INSERTED.id AS receiptTypeId
+      VALUES (@name, @price_type);
     `;
 
-    // Use parameterized queries to avoid SQL injection
-    const request = new sql.Request();
-    request.input("name", sql.NVarChar, name);
-    request.input("price_type", sql.NVarChar, price_type);
-    request.input("sequence_txt", sql.NVarChar, sequence_txt);
-    request.input("sequence_num", sql.Int, sequence_num);
+    const receiptTypeRequest = new sql.Request(transaction);
+    receiptTypeRequest.input("name", sql.NVarChar, name);
+    receiptTypeRequest.input("price_type", sql.NVarChar, price_type);
 
-    // Execute the query
-    await request.query(query);
+    const receiptTypeResult = await receiptTypeRequest.query(receiptTypeQuery);
+    const receiptTypeId = receiptTypeResult.recordset[0].receiptTypeId;
 
-    // Send success response
-    res.status(201).json({ message: "Receipt type added successfully!" });
+    // Insert into tblSequence with the retrieved ReceiptTypeID
+    const sequenceQuery = `
+      INSERT INTO tblSequence (SequenceText, SequenceNumber, ReceiptTypeID)
+      VALUES (@sequence_txt, @sequence_num, @receiptTypeId);
+    `;
+
+    const sequenceRequest = new sql.Request(transaction);
+    sequenceRequest.input("sequence_txt", sql.NVarChar, sequence_txt);
+    sequenceRequest.input("sequence_num", sql.Int, sequence_num);
+    sequenceRequest.input("receiptTypeId", sql.Int, receiptTypeId);
+
+    await sequenceRequest.query(sequenceQuery);
+
+    await transaction.commit();
+
+    res.status(201).json({ message: "Receipt type and sequence added successfully!" });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
   } finally {
-    // Close the database connection
     sql.close();
   }
 });
+
+
+
 
 //get receipt type
 

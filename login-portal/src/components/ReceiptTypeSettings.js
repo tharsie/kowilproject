@@ -6,7 +6,7 @@ const ReceiptTypeSettings = () => {
   const [newType, setNewType] = useState("");
   const [priceType, setPriceType] = useState("single"); // Default to single price
   const [prices, setPrices] = useState([""]); // For multiple prices
-  const [newSequence, setNewSequence] = useState(""); // Sequence for bill number
+  const [newSequence, setNewSequence] = useState({ text: "", number: "" }); // Sequence for bill number
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -46,18 +46,25 @@ const ReceiptTypeSettings = () => {
       setNewTypeError("");
     }
 
-    if (!newSequence.trim()) {
-      setNewSequenceError("Sequence is required!");
+    if (!newSequence.text.trim()) {
+      setNewSequenceError("Text part of sequence is required!");
+      valid = false;
+    } else {
+      setNewSequenceError("");
+    }
+
+    if (!newSequence.number.trim()) {
+      setNewSequenceError("Number part of sequence is required!");
       valid = false;
     } else {
       setNewSequenceError("");
     }
 
     // Extract numeric part for sequence_num
-    const extractedNumber = parseInt(newSequence.replace(/\D/g, ""), 10); // Remove non-numeric characters
+    const extractedNumber = parseInt(newSequence.number.replace(/\D/g, ""), 10); // Remove non-numeric characters
 
     if (isNaN(extractedNumber)) {
-      setNewSequenceError("Sequence must contain at least one number!");
+      setNewSequenceError("Sequence must contain a valid number!");
       valid = false;
     } else {
       setNewSequenceError("");
@@ -76,7 +83,7 @@ const ReceiptTypeSettings = () => {
     const receiptData = {
       name: newType,
       price_type: priceType,
-      sequence_txt: newSequence, // Keep the original input (text + numbers)
+      sequence_txt: `${newSequence.text}-${newSequence.number}`, // Keep the original input (text + numbers)
       sequence_num: extractedNumber, // Use only numbers for sequence_num
     };
 
@@ -97,13 +104,13 @@ const ReceiptTypeSettings = () => {
         // Update the state with the new receipt type
         setReceiptTypes((prevReceiptTypes) => [
           ...prevReceiptTypes,
-          { name: newType, price_type: priceType, sequence: newSequence },
+          { name: newType, price_type: priceType, sequence: `${newSequence.text}-${newSequence.number}` },
         ]);
 
         // Reset fields
         setNewType("");
         setPrices([""]);
-        setNewSequence("");
+        setNewSequence({ text: "", number: "" });
         setShowModal(false);
       } else {
         const errorData = await response.json();
@@ -126,8 +133,15 @@ const ReceiptTypeSettings = () => {
       setNewTypeError("");
     }
 
-    if (!newSequence.trim()) {
-      setNewSequenceError("Sequence is required!");
+    if (!newSequence.text.trim()) {
+      setNewSequenceError("Text part of sequence is required!");
+      valid = false;
+    } else {
+      setNewSequenceError("");
+    }
+
+    if (!newSequence.number.trim()) {
+      setNewSequenceError("Number part of sequence is required!");
       valid = false;
     } else {
       setNewSequenceError("");
@@ -148,14 +162,14 @@ const ReceiptTypeSettings = () => {
             ...type,
             name: newType,
             price: priceType === "single" ? prices[0] : prices,
-            sequence: newSequence,
+            sequence: `${newSequence.text}-${newSequence.number}`,
           }
         : type
     );
     setReceiptTypes(updatedTypes);
     setNewType("");
     setPrices([""]);
-    setNewSequence("");
+    setNewSequence({ text: "", number: "" });
     setShowModal(false);
     setEditMode(false);
   };
@@ -171,10 +185,14 @@ const ReceiptTypeSettings = () => {
 
   const handleEdit = (type) => {
     setCurrentType(type);
+    const sequenceParts = type.sequence.split("-");
+    setNewSequence({
+      text: sequenceParts[0],
+      number: sequenceParts[1],
+    });
     setNewType(type.name);
     setPriceType(Array.isArray(type.price) ? "multiple" : "single");
     setPrices(Array.isArray(type.price) ? type.price : [type.price]);
-    setNewSequence(type.sequence);
     setEditMode(true);
     setShowModal(true);
   };
@@ -189,8 +207,11 @@ const ReceiptTypeSettings = () => {
     setPrices((prevPrices) => [...prevPrices, ""]); // Ensure state update with the previous prices
   };
 
-  const handleSequenceChange = (text, number) => {
-    setNewSequence(`${text}-${number}`);
+  const handleSequenceChange = (field, value) => {
+    setNewSequence((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
   };
 
   return (
@@ -286,8 +307,8 @@ const ReceiptTypeSettings = () => {
                 }}
                 className="border p-2 rounded w-full"
               >
-                <option value="single">Single Price</option>
-                <option value="multiple">Multiple Prices</option>
+                <option value="single">single</option>
+                <option value="multiple">multiple</option>
               </select>
             </div>
 
@@ -307,9 +328,9 @@ const ReceiptTypeSettings = () => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
                 <button
                   onClick={addPriceField}
-                  className="bg-green-500 text-white px-2 py-1 rounded"
+                  className="bg-green-500 text-white px-2 py-1 rounded mt-2"
                 >
-                  Add Price Field
+                  Add Price
                 </button>
               </div>
             )}
@@ -318,30 +339,34 @@ const ReceiptTypeSettings = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Sequence Start</label>
               <div className="flex items-center gap-2">
-                {/* Text Part */}
+                {/* Text Part (only letters) */}
                 <input
                   type="text"
                   className="border p-2 rounded w-1/6"
-                  value={newSequence.split('-')[0] || ''}
-                  onChange={(e) => handleSequenceChange(e.target.value, newSequence.split('-')[1] || '')}
                   placeholder="ARR"
+                  value={newSequence.text}
+                  onChange={(e) => handleSequenceChange("text", e.target.value)}
+                  pattern="[A-Za-z]*"
+                  title="Only letters are allowed"
                 />
 
                 {/* Hyphen Separator */}
                 <span className="text-lg">-</span>
 
-                {/* Numbers Part */}
+                {/* Numbers Part (only numbers) */}
                 <input
                   type="number"
                   className="border p-2 rounded w-1/4"
-                  value={newSequence.split('-')[1] || ''}
-                  onChange={(e) => handleSequenceChange(newSequence.split('-')[0] || '', e.target.value)}
                   placeholder="001"
+                  value={newSequence.number}
+                  onChange={(e) => handleSequenceChange("number", e.target.value)}
+                  min="0"
                 />
               </div>
               {newSequenceError && <p className="text-red-500 text-sm">{newSequenceError}</p>}
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
@@ -353,7 +378,7 @@ const ReceiptTypeSettings = () => {
                 onClick={editMode ? editReceiptType : addReceiptType}
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
-                {editMode ? "Save Changes" : "Add Receipt Type"}
+                {editMode ? "Save Changes" : "Add Type"}
               </button>
             </div>
           </div>
