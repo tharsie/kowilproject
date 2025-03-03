@@ -6,15 +6,33 @@ const Receipt = () => {
   const [amount, setAmount] = useState("");
   const [amountInWords, setAmountInWords] = useState("");
   const [date, setDate] = useState("");
-  const [receiptType, setReceiptType] = useState("அர்ச்சனை");
-  const receiptTypes = ["அர்ச்சனை", "நன்கொடை", "அன்னதானம்", "நார்ப்பணி"];
   const [dropdownValue, setDropdownValue] = useState("");
   const [secondDropdownValue, setSecondDropdownValue] = useState("");
   const [selectedRadio, setSelectedRadio] = useState("");
+  const [receiptTypes, setReceiptTypes] = useState([]);
+  const [receiptType, setReceiptType] = useState("");
 
   useEffect(() => {
     const currentDate = new Date().toISOString().split("T")[0];
     setDate(currentDate);
+  }, []);
+
+  useEffect(() => {
+    const fetchReceiptTypes = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/receipt-types");
+        if (response.ok) {
+          const data = await response.json();
+          setReceiptTypes(data); // Assuming data is an array of receipt types
+        } else {
+          console.error("Failed to fetch receipt types");
+        }
+      } catch (error) {
+        console.error("Error fetching receipt types:", error);
+      }
+    };
+
+    fetchReceiptTypes();
   }, []);
 
   const handleAmountChange = (e) => {
@@ -53,16 +71,21 @@ const Receipt = () => {
       <form onSubmit={handleFormSubmit} className="space-y-4">
         {/* Receipt Type */}
         <div>
-          <label htmlFor="receiptType" className="block text-lg font-medium">Receipt Type</label>
+          <label htmlFor="receiptType" className="block text-lg font-medium">
+            Receipt Type
+          </label>
           <select
             id="receiptType"
             value={receiptType}
             onChange={(e) => setReceiptType(e.target.value)}
             className="border p-2 rounded w-full"
           >
+            <option value="" disabled>
+              Select Receipt Type
+            </option>
             {receiptTypes.map((type, index) => (
-              <option key={index} value={type}>
-                {type}
+              <option key={index} value={type.name}>
+                {type.name}
               </option>
             ))}
           </select>
@@ -156,8 +179,8 @@ const Receipt = () => {
               onChange={(e) => setDropdownValue(e.target.value)}
               className="border p-2 rounded w-full"
             >
-              <option value="">ராசி</option>
-              {[
+              <option value="">Select Rashi</option>
+              {[ 
                 "மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி",
                 "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"
               ].map((option, index) => (
@@ -177,8 +200,8 @@ const Receipt = () => {
               onChange={(e) => setSecondDropdownValue(e.target.value)}
               className="border p-2 rounded w-full"
             >
-              <option value="">நட்சத்திரம்</option>
-              {[
+              <option value="">Select Nakshatram</option>
+              {[ 
                 "அசுவினி", "பரணி", "கார்த்திகை", "ரோகிணி", "மிருகசிரீஷம்",
                 "திருவாதிரை", "புனர்பூசம்", "பூசம்", "ஆயில்யம்", "மகம்", "பூரம்",
                 "உத்திரம்", "ஹஸ்தம்", "சித்திரை", "சுவாதி", "விசாகம்", "அனுஷம்",

@@ -369,10 +369,14 @@ app.post("/api/login", async (req, res) => {
 
 //receipt type
 app.post("/api/receipt-types", async (req, res) => {
-  const { name, price_type, sequence_txt, sequence_num } = req.body;
+  const { name, price_type, sequence_txt, sequence_num, prices } = req.body;
 
   if (!name || !price_type || !sequence_txt || !sequence_num) {
-    return res.status(400).json({ error: "All fields are required" });
+    return res.status(400).json({ error: "All fields except prices are required" });
+  }
+
+  if (price_type === 'multiple' && (!prices || prices.length === 0)) {
+    return res.status(400).json({ error: "Prices are required when price_type is 'multiple'" });
   }
 
   try {
@@ -409,9 +413,29 @@ app.post("/api/receipt-types", async (req, res) => {
 
     await sequenceRequest.query(sequenceQuery);
 
+    // Insert multiple prices into tblMultiPrices if price_type is 'multiple'
+    if (price_type === 'multiple' && Array.isArray(prices) && prices.length > 0) {
+      const priceQueries = prices.map(price => {
+        const priceQuery = `
+          INSERT INTO tblMultiPrices (ReceiptTypeID, Price)
+          VALUES (@receiptTypeId, @price);
+        `;
+        
+        const priceRequest = new sql.Request(transaction);
+        priceRequest.input("receiptTypeId", sql.Int, receiptTypeId);
+        priceRequest.input("price", sql.Decimal(10, 2), price);
+
+        return priceRequest.query(priceQuery);
+      });
+
+      // Execute all price queries
+      await Promise.all(priceQueries);
+    }
+
+    // Commit the transaction
     await transaction.commit();
 
-    res.status(201).json({ message: "Receipt type and sequence added successfully!" });
+    res.status(201).json({ message: "Receipt type, sequence, and prices added successfully!" });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
@@ -423,30 +447,30 @@ app.post("/api/receipt-types", async (req, res) => {
 
 
 
+
 //get receipt type
+
 
 app.get("/api/receipt-types", async (req, res) => {
   try {
-    // Connect to the database
+    // Connect to the MS SQL Server
     await sql.connect(dbConfig);
 
-    // Execute the query
-    const result = await sql.query(`
-      SELECT id, name, price_type, sequence_txt, sequence_num 
-      FROM receipt_types 
-      ORDER BY sequence_num ASC;
-    `);
+    // Query to get all receipt types
+    const result = await sql.query("SELECT name FROM receipt_types");
 
-    // Log the result to check if data is returned
-    console.log("Result:", result.recordset);
-
-    // Send response
-    res.status(200).json(result.recordset);
+    // Check if there are results and send as response
+    if (result.recordset.length > 0) {
+      res.status(200).json(result.recordset); // Send the array of receipt types
+    } else {
+      res.status(404).json({ message: "No receipt types found" });
+    }
   } catch (err) {
-    console.error("Error fetching receipt types:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Failed to fetch receipt types" });
   } finally {
-    sql.close(); // Ensure the connection is closed
+    // Close the database connection
+    await sql.close();
   }
 });
 

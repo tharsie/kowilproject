@@ -38,55 +38,56 @@ const ReceiptTypeSettings = () => {
   const addReceiptType = async () => {
     // Validation
     let valid = true;
-
+  
     if (!newType.trim()) {
       setNewTypeError("Receipt Type Name is required!");
       valid = false;
     } else {
       setNewTypeError("");
     }
-
+  
     if (!newSequence.text.trim()) {
       setNewSequenceError("Text part of sequence is required!");
       valid = false;
     } else {
       setNewSequenceError("");
     }
-
+  
     if (!newSequence.number.trim()) {
       setNewSequenceError("Number part of sequence is required!");
       valid = false;
     } else {
       setNewSequenceError("");
     }
-
+  
     // Extract numeric part for sequence_num
     const extractedNumber = parseInt(newSequence.number.replace(/\D/g, ""), 10); // Remove non-numeric characters
-
+  
     if (isNaN(extractedNumber)) {
       setNewSequenceError("Sequence must contain a valid number!");
       valid = false;
     } else {
       setNewSequenceError("");
     }
-
+  
     if (priceType === "multiple" && prices.some((price) => price.trim() === "")) {
       setPriceError("All price fields are required for multiple prices.");
       valid = false;
     } else {
       setPriceError("");
     }
-
+  
     if (!valid) return;
-
+  
     // Prepare the data to send to the backend
     const receiptData = {
       name: newType,
       price_type: priceType,
       sequence_txt: `${newSequence.text}-${newSequence.number}`, // Keep the original input (text + numbers)
       sequence_num: extractedNumber, // Use only numbers for sequence_num
+      prices: priceType === "multiple" ? prices.map(price => parseFloat(price.trim())) : [], // Only send prices if priceType is "multiple"
     };
-
+  
     try {
       // Send POST request to the backend
       const response = await fetch("http://localhost:3000/api/receipt-types", {
@@ -96,17 +97,17 @@ const ReceiptTypeSettings = () => {
         },
         body: JSON.stringify(receiptData),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         console.log(data.message);
-
+  
         // Update the state with the new receipt type
         setReceiptTypes((prevReceiptTypes) => [
           ...prevReceiptTypes,
           { name: newType, price_type: priceType, sequence: `${newSequence.text}-${newSequence.number}` },
         ]);
-
+  
         // Reset fields
         setNewType("");
         setPrices([""]);
@@ -122,6 +123,7 @@ const ReceiptTypeSettings = () => {
       alert("Network error. Please try again.");
     }
   };
+  
 
   const editReceiptType = () => {
     // Validation
