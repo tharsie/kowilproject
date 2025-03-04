@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaShoppingCart } from "react-icons/fa";
 
 const MemberPage = () => {
   const [formData, setFormData] = useState({
@@ -150,35 +151,67 @@ const MemberPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      {/* Add Member Button */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="px-6 py-2 bg-blue-500 text-white rounded-lg mb-6 hover:bg-blue-700 transition duration-300"
-      >
-        Add Member
-      </button>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search members..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-3 w-full md:w-1/3 border border-gray-300 rounded-lg focus:outline-none"
-        />
+      <nav className="text-white fixed w-full p-6 border-b-2 top-0 left-0 border-gray-300 -mt-6">
+              <div className="flex items-center justify-between">
+                {/* Logo */}
+                <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-4 lg:ml-[289px] text-black">
+                  POS-Dashboard
+                </h1>
+      
+                {/* Search Bar */}
+                <div className="hidden lg:block flex-grow max-w-sm ml-4 lg:ml-[530px]">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full p-3 bg-gray-100 rounded-3xl mt-6 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+      
+                {/* Cart Icon */}
+                <div className="relative ml-4 lg:ml-0">
+                  <FaShoppingCart className="text-2xl text-gray-700 mt-6 cursor-pointer" />
+                  <span className="absolute top-4 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                    3 {/* Dynamic count */}
+                  </span>
+                </div>
+              </div>
+      
+              {/* Search Bar for Mobile */}
+              <div className="block lg:hidden px-4 mt-3">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full p-3 bg-gray-100 rounded-3xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </nav>
+      {/* Add Member Button */}
+      <div className='mt-24 '>
+      <div className="flex justify-end">
+          <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-6 py-2 bg-[#FD9400] text-white rounded-lg mb-6 hover:bg-blue-700 transition duration-300"
+          >
+          Add Member
+        </button>
       </div>
+
+
+      
 
       {/* Member List */}
       <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
         <table className="min-w-full table-auto text-sm">
-          <thead className="bg-gray-100">
+          <thead className="bg-[#FD940012]">
             <tr>
+            <th className="p-3 text-left">Title</th>
               <th className="p-3 text-left">First Name</th>
               <th className="p-3 text-left">Last Name</th>
               <th className="p-3 text-left">Phone</th>
               <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Title</th>
+              
             </tr>
           </thead>
           <tbody>
@@ -189,18 +222,19 @@ const MemberPage = () => {
             ) : (
               filteredMembers.map((member) => (
                 <tr key={member.MemberId} className="border-t">
+                  <td className="p-3">{member.Title}</td>
                   <td className="p-3">{member.FirstName}</td>
                   <td className="p-3">{member.LastName}</td>
                   <td className="p-3">{member.PhoneNumber}</td>
                   <td className="p-3">{member.Email}</td>
-                  <td className="p-3">{member.Title}</td>
+                  
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
-
+      </div>
       {/* Modal - Add Member Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
