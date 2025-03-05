@@ -3,9 +3,9 @@ import ReceiptTypeSettings from "./ReceiptTypeSettings"; // Import Receipt Type 
 
 const Settings = () => {
   return (
-    <div className="flex h-[810px] bg-gray-100">
+    <div className="flex h-[810px] bg-white">
       {/* Sidebar */}
-      <div className="inline-block bg-gradient-to-b from-blue-500 to-indigo-600 text-white p-6 mb-10 rounded-lg shadow-xl w-1/7">
+      <div className="inline-block bg-[#FD9400] h-[40%] from-blue-500 to-indigo-600 text-white p-6 mb-10 rounded-lg shadow-xl w-1/7">
         <h2 className="text-2xl font-semibold mb-8">Settings</h2>
         <ul className="space-y-4">
           <li>

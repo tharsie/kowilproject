@@ -17,59 +17,59 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen ">
       {/* Sidebar */}
-      <div className="fixed w-[250px] bg-white-800 text-white flex flex-col h-full border-r-2 border-gray-300">
+      <div className="fixed w-4/10 bg-white-800 text-white flex flex-col h-full border-r-2 border-gray-300 z-10">
         <ul className="space-y-4 mt-4 flex-grow">
           <li>
-            <div className="text-white p-7  -mt-14 border-gray-300">
+            <div className="text-white p-6  -mt-14 border-gray-300">
             <div className="p-3 text-6xl pt-5 font-bold h-[89px] text-[#FD9400]">
               <h1>Logo</h1>
             </div>
             </div>
           </li>
-          <li className="text-black">
+          <li className="text-black text-[18px]">
             <Link
               to="overview"
-              className="block cursor-pointer flex font-bold p-4 hover:bg-[#FD940012]"
+              className="block cursor-pointer flex font-semibold  p-4 hover:bg-[#FD940012]"
 
             >
               <img src={addressbook1} alt="Cart" className="w-8 h-8 mr-3" />
               Dashboard
             </Link>
           </li>
-          <li className="text-black">
+          <li className="text-black text-[18px]">
             <Link
               to="member"
-              className="block cursor-pointer flex font-bold p-4 hover:bg-[#FD940012]"
+              className="block cursor-pointer flex font-semibold p-4 hover:bg-[#FD940012]"
 
             >
               <img src={addressbook2} alt="Cart" className="w-8 h-8 mr-3" />
               Member
             </Link>
           </li>
-          <li className="text-black">
+          <li className="text-black text-[18px]">
             <Link
               to="receipt"
-              className="block cursor-pointer flex font-bold p-4 hover:bg-[#FD940012]"
+              className="block cursor-pointer flex font-semibold p-4 hover:bg-[#FD940012]"
             >
               <img src={addressbook3} alt="Cart" className="w-8 h-8 mr-3" />
               Receipt
             </Link>
           </li>
-          <li className="text-black">
+          <li className="text-black text-[18px]">
             <Link
               to="transaction"
-              className="block cursor-pointer flex font-bold p-4 hover:bg-[#FD940012]"
+              className="block cursor-pointer flex font-semibold p-4 hover:bg-[#FD940012]"
             >
               <img src={addressbook4} alt="Cart" className="w-8 h-8 mr-3" />
               Transaction
             </Link>
           </li>
-          <li className="text-black">
+          <li className="text-black text-[18px]">
             <Link
               to="settings"
-              className="block cursor-pointer flex font-bold p-4 hover:bg-[#FD940012]"
+              className="block cursor-pointer flex font-semibold p-4 hover:bg-[#FD940012]"
             >
               <img src={addressbook5} alt="Cart" className="w-8 h-8 mr-3" />
               Settings
