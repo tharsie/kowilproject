@@ -231,7 +231,7 @@ const ReceiptTypeSettings = () => {
         />
         <button
           onClick={() => setShowModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-[#FD9400] text-white px-4 py-2 rounded"
         >
           Add Receipt Type
         </button>
@@ -378,7 +378,7 @@ const ReceiptTypeSettings = () => {
               </button>
               <button
                 onClick={editMode ? editReceiptType : addReceiptType}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-[#FD9400] text-white px-4 py-2 rounded"
               >
                 {editMode ? "Save Changes" : "Add Type"}
               </button>

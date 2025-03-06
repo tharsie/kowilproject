@@ -174,9 +174,9 @@ const MemberPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <nav className="text-white fixed  p-6 border-b-2 top-0 left-0 border-gray-300 -mt-6 z-10  w-full ">
-        <div className="flex items-center  w-[85%] ml-[14%]  bg-white justify-between">
-          <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-[80px] text-black">
+      <nav className="text-white fixed bg-white p-6 border-b-2 top-0 justify-center left-0 border-gray-300 -mt-7 z-10  w-full ">
+        <div className="flex items-center  w-[84%] ml-[15%]  bg-white justify-between">
+          <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-[66px]  text-black">
             POS-Dashboard
           </h1>
 

@@ -215,7 +215,7 @@ const Receipt = () => {
 
         {/* Submit Button */}
         <div className="text-center">
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded w-full">
+          <button type="submit" className="bg-[#FD9400] text-white py-2 px-4 rounded w-full">
             Generate Receipt
           </button>
         </div>
