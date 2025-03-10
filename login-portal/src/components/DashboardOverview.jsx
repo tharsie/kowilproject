@@ -1,5 +1,4 @@
 import React from "react";
-import { FaShoppingCart } from "react-icons/fa"; // Add this import for the shopping cart icon
 import Rect11 from "../assets/Rectangle11.png";
 import Rect12 from "../assets/Rectangle12.png";
 import Rect13 from "../assets/Rectangle13.png";
@@ -7,8 +6,16 @@ import Rect17 from "../assets/Rectangle17.png";
 import cart from "../assets/cart.svg"
 import arrow from "../assets/right 1.png"
 import premiumpng from "../assets/premium-quality 1.png"
+import { useNavigate } from "react-router-dom"; 
 
 const DashboardOverview = () => {
+
+  const navigate = useNavigate();
+
+  const handleRedirect = () => {  
+    navigate("/dashboard/receipt"); // Replace with your target route
+  };
+
   return (
     <div className="relative">
       {/* Navbar */}
@@ -122,7 +129,7 @@ const DashboardOverview = () => {
             </button>
             </div>
           </div>
-            <div className="rounded-lg w-[130px] bg-[#FD94000D] flex flex-col justify-center items-center p-2">
+            <div className="rounded-lg w-[130px] bg-[#FD94000D] flex flex-col justify-center items-center p-2 cursor-pointer hover:text-white hover:bg-[#FD9400]"onClick={handleRedirect}>
               <div className="w-[50px] h-[50px] rounded-full bg-white flex justify-center items-center">
                 <img src={arrow} alt="Rectangle" className="w-full" />
               </div>

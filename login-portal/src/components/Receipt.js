@@ -1,225 +1,171 @@
 import { useState, useEffect } from "react";
-import { toWords } from "number-to-words";
+import ReceiptForm from "./ReceiptForm";
+import cart from "../assets/cart.svg"
 
 const Receipt = () => {
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [amountInWords, setAmountInWords] = useState("");
-  const [date, setDate] = useState("");
-  const [dropdownValue, setDropdownValue] = useState("");
-  const [secondDropdownValue, setSecondDropdownValue] = useState("");
-  const [selectedRadio, setSelectedRadio] = useState("");
-  const [receiptTypes, setReceiptTypes] = useState([]);
-  const [receiptType, setReceiptType] = useState("");
+  const [receipts, setReceipts] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
+  // Fetch receipts from the backend when the component mounts
   useEffect(() => {
-    const currentDate = new Date().toISOString().split("T")[0];
-    setDate(currentDate);
+    fetch("http://localhost:3000/api/receipts")
+      .then((response) => response.json())
+      .then((data) => {
+        setReceipts(data); // Update state with fetched data
+      })
+      .catch((error) => {
+        alert(`Error fetching receipts: ${error.message}`);
+      });
   }, []);
 
-  useEffect(() => {
-    const fetchReceiptTypes = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/receipt-types");
-        if (response.ok) {
-          const data = await response.json();
-          setReceiptTypes(data); // Assuming data is an array of receipt types
-        } else {
-          console.error("Failed to fetch receipt types");
+  const handleFormSubmit = (receiptData) => {
+    fetch("http://localhost:3000/api/receipts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(receiptData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to generate receipt");
         }
-      } catch (error) {
-        console.error("Error fetching receipt types:", error);
-      }
-    };
-
-    fetchReceiptTypes();
-  }, []);
-
-  const handleAmountChange = (e) => {
-    const value = e.target.value;
-    setAmount(value);
-
-    if (!isNaN(parseFloat(value)) && parseFloat(value) > 0) {
-      setAmountInWords(toWords(parseInt(value, 10)) + " rupees");
-    } else {
-      setAmountInWords("");
-    }
+        return response.json();
+      })
+      .then((data) => {
+        alert(`Receipt generated successfully!`);
+        setReceipts((prevReceipts) => [...prevReceipts, receiptData]); // Add new receipt to the table
+        setIsFormVisible(false); // Hide the form after submitting
+      })
+      .catch((error) => {
+        alert(`Error: ${error.message}`);
+      });
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+  const handleAddReceiptClick = () => {
+    setIsFormVisible(true); // Show the popup
+  };
 
-    if (!name.trim()) {
-      alert("Please enter the recipient's name.");
-      return;
-    }
-
-    if (receiptType !== "அர்ச்சனை" && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
-      alert("Please enter a valid amount in numbers.");
-      return;
-    }
-
-    alert(
-      `Receipt generated for ${name}\nAmount: ${amount} (${amountInWords})\nReceipt Type: ${receiptType}\nDate: ${date}\nDropdown Selection: ${dropdownValue}\nSecond Dropdown Selection: ${secondDropdownValue}\nSelected Radio: ${selectedRadio}`
-    );
+  const handleClosePopup = () => {
+    setIsFormVisible(false); // Close the popup
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white shadow-lg mt-12 rounded-md">
-      <h2 className="text-2xl font-semibold text-center mb-6">Receipt Section</h2>
+    <div >
+      <nav className="text-white bg-white  fixed w-full p-6 border-b-2 top-0 left-0 border-gray-300 -mt-7 z-16">
+                    <div className="flex items-center  justify-between">
+                      {/* Logo */}
+                      <h1 className="text-2xl lg:text-3xl font-bold mt-6 pl-14 ml-4 lg:ml-[244px] text-black">
+                        Dashboard
+                      </h1>
+            
+                      {/* Search Bar */}
+                      <div className="hidden lg:block flex-grow max-w-sm ml-4 lg:ml-[530px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full p-3 bg-gray-100 rounded-3xl mt-6 border pl-7 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+            
+                      {/* Cart Icon */}
+                      <div className="relative ml-4 -lg:ml-4 mt-5">
+                        <img src={cart} alt="Cart" className="w-10 h-10" />
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                            3 {/* Dynamic count */}
+                        </span>
+                      </div>
+                    </div>
+            
+                    {/* Search Bar for Mobile */}
+                    <div className="block lg:hidden px-4 mt-3">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full p-3 bg-gray-100 rounded-3xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </nav>
+                  <div className="max-w-6xl mx-auto my-8 p-4 mt-[90px] bg-white shadow-md rounded-md">
+            <h1 className="text-2xl font-bold mb-6">Generate Receipt</h1>
 
-      <form onSubmit={handleFormSubmit} className="space-y-4">
-        {/* Receipt Type */}
-        <div>
-          <label htmlFor="receiptType" className="block text-lg font-medium">
-            Receipt Type
-          </label>
-          <select
-            id="receiptType"
-            value={receiptType}
-            onChange={(e) => setReceiptType(e.target.value)}
-            className="border p-2 rounded w-full"
-          >
-            <option value="" disabled>
-              Select Receipt Type
-            </option>
-            {receiptTypes.map((type, index) => (
-              <option key={index} value={type.name}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
+           {/* Add Receipt Button (Opens Popup) */}
+             <button
+             onClick={handleAddReceiptClick}
+             className="bg-[#FD9400] text-white py-2 px-4 rounded mb-6"
+           >
+               Add Receipt
+            </button>
 
-        {/* Recipient's Name */}
-        <div>
-          <label htmlFor="name" className="block text-lg font-medium">Recipient's Name</label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border p-2 rounded w-full"
-            required
-          />
-        </div>
-
-        {/* Amount Field - Hidden for "அர்ச்சனை" */}
-        {receiptType !== "அர்ச்சனை" && (
-          <div>
-            <label htmlFor="amount" className="block text-lg font-medium">Receipt Amount (Numbers)</label>
-            <input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={handleAmountChange}
-              className="border p-2 rounded w-full"
-              min="0.01"
-              step="0.01"
-              required
-            />
-          </div>
-        )}
-
-        {/* Amount in Words (Auto-Generated) */}
-        {receiptType !== "அர்ச்சனை" && (
-          <div>
-            <label htmlFor="amountInWords" className="block text-lg font-medium">Receipt Amount (In Words)</label>
-            <input
-              id="amountInWords"
-              type="text"
-              value={amountInWords}
-              className="border p-2 rounded w-full bg-gray-100"
-              readOnly
-            />
-          </div>
-        )}
-
-        {/* Radio Buttons for "அர்ச்சனை" */}
-        {receiptType === "அர்ச்சனை" && (
-          <div>
-            <label className="block text-lg font-medium">Select amount of அர்ச்சனை</label>
-            <div className="flex space-x-4">
-              {["Option 1", "Option 2", "Option 3", "Option 4"].map((option, index) => (
-                <label key={index}>
-                  <input
-                    type="radio"
-                    name="arcanationOption"
-                    value={option}
-                    checked={selectedRadio === option}
-                    onChange={(e) => setSelectedRadio(e.target.value)}
-                  />
-                  {` Price ${index + 1}`}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Date */}
-        <div>
-          <label htmlFor="date" className="block text-lg font-medium">Date</label>
-          <input
-            id="date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border p-2 rounded w-full"
-            required
-          />
-        </div>
-
-        {/* First Dropdown Before Submit - Show only for "அர்ச்சனை" */}
-        {receiptType === "அர்ச்சனை" && (
-          <div>
-            <label htmlFor="dropdown" className="block text-lg font-medium">Select Option</label>
-            <select
-              id="dropdown"
-              value={dropdownValue}
-              onChange={(e) => setDropdownValue(e.target.value)}
-              className="border p-2 rounded w-full"
+           {/* Popup Modal */}
+          {isFormVisible && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+             <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+             <h2 className="text-xl font-bold mb-4">Add New Receipt</h2>
+            <ReceiptForm onSubmit={handleFormSubmit} />
+            <button
+              onClick={handleClosePopup}
+              className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
             >
-              <option value="">Select Rashi</option>
-              {[ 
-                "மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி",
-                "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"
-              ].map((option, index) => (
-                <option key={index} value={option}>{option}</option>
-              ))}
-            </select>
+              Close
+            </button>
           </div>
-        )}
-
-        {/* Second Dropdown Before Submit - Show only for "அர்ச்சனை" */}
-        {receiptType === "அர்ச்சனை" && (
-          <div>
-            <label htmlFor="secondDropdown" className="block text-lg font-medium">Select Another Option</label>
-            <select
-              id="secondDropdown"
-              value={secondDropdownValue}
-              onChange={(e) => setSecondDropdownValue(e.target.value)}
-              className="border p-2 rounded w-full"
-            >
-              <option value="">Select Nakshatram</option>
-              {[ 
-                "அசுவினி", "பரணி", "கார்த்திகை", "ரோகிணி", "மிருகசிரீஷம்",
-                "திருவாதிரை", "புனர்பூசம்", "பூசம்", "ஆயில்யம்", "மகம்", "பூரம்",
-                "உத்திரம்", "ஹஸ்தம்", "சித்திரை", "சுவாதி", "விசாகம்", "அனுஷம்",
-                "கேட்டை", "மூலம்", "பூராடம்"
-              ].map((option, index) => (
-                <option key={index} value={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <div className="text-center">
-          <button type="submit" className="bg-[#FD9400] text-white py-2 px-4 rounded w-full">
-            Generate Receipt
-          </button>
         </div>
-      </form>
+      )}
+
+      {/* Receipt Table */}
+      {receipts.length > 0 && (
+        <div className="mt-8 overflow-x-auto">
+          <table className="table-auto w-full border-collapse border border-gray-200">
+            <thead>
+              <tr>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                  Receipt Type
+                </th>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                  Recipient's Name
+                </th>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                  Date
+                </th>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                  Receipt Amount (Numbers)
+                </th>
+                <th className="border border-gray-300 px-4 py-2 text-left">
+                  Radio Button Value
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {receipts.map((receipt, index) => (
+                <tr key={index} className="border-b border-gray-200">
+                  <td className="border border-gray-300 px-4 py-2">
+                    {receipt.receiptType}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {receipt.name}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {receipt.date}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {receipt.amount}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {receipt.selectedRadio || "N/A"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* If no receipts, show a message */}
+      {receipts.length === 0 && (
+        <p className="mt-4 text-gray-500">No receipts generated yet.</p>
+      )}
+    </div>
     </div>
   );
 };

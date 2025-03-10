@@ -31,16 +31,16 @@ const Dashboard = () => {
           <li className="text-black text-[18px] p-4 -mt-2 ml-2">
             <Link
               to="overview"
-              className="block cursor-pointer flex font-semibold hover  p-3 hover:bg-[#FD940012]"
+              className="block cursor-pointer rounded-xl flex font-semibold hover  p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook1} alt="Cart" className="w-7 h-7 mr-3" />
               Dashboard
             </Link>
           </li>
-          <li className="text-black text-[18px] p-4 -mt-4 ml-2">
+          <li className="text-black rounded-full text-[18px] p-4 -mt-4 ml-2">
             <Link
               to="member"
-              className="block cursor-pointer flex font-semibold p-3 hover:bg-[#FD940012]"
+              className="block cursor-pointer rounded-xl flex font-semibold p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook2} alt="Cart" className="w-7 h-7 mr-3" />
               Member
@@ -49,16 +49,16 @@ const Dashboard = () => {
           <li className="text-black text-[18px] p-4 -mt-4 ml-2">
             <Link
               to="receipt"
-              className="block cursor-pointer flex font-semibold p-3 hover:bg-[#FD940012]"
+              className="block cursor-pointer rounded-xl flex font-semibold p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook3} alt="Cart" className="w-8 h-8 mr-3" />
               Receipt
             </Link>
           </li>
-          <li className="text-black text-[18px] p-4 -mt-4 ml-2 boarder-2 rounded-xl">
+          <li className="text-black text-[18px]  p-4 -mt-4 ml-2 boarder-2 rounded-xl">
             <Link
               to="transaction"
-              className="block cursor-pointer flex font-semibold p-3 hover:bg-[#FD940012]"
+              className="block cursor-pointer rounded-xl flex font-semibold p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook4} alt="Cart" className="w-8 h-8 mr-3" />
               Transaction
@@ -67,7 +67,7 @@ const Dashboard = () => {
           <li className="text-black text-[18px] p-4 -mt-4 ml-2">
             <Link
               to="settings"
-              className="block cursor-pointer flex font-semibold p-3 hover:bg-[#FD940012]"
+              className="block cursor-pointer rounded-xl flex font-semibold p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook5} alt="Cart" className="w-7 h-7 mr-3" />
               Settings
@@ -78,7 +78,7 @@ const Dashboard = () => {
         <div className="p-4 mt-auto ml-9">
           <button
             onClick={handleLogout}
-            className="px-6 py-2 bg-[#FD9400] text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-300"
+            className="px-6 py-2 bg-[#FD9400] text-white font-semibold rounded-lg shadow-md hover:bg-[#FD940012] hover:text-[#FD9400] hover:border-[#FD9400] hover:border-2 transition duration-300"
           >
             Logout
           </button>

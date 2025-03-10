@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaShoppingCart, FaEdit, FaPrint } from "react-icons/fa";
 import cart from "../assets/cart.svg"
+import ReceiptForm from "./ReceiptForm";
+
 
 const MemberPage = () => {
+  const [receipts, setReceipts] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -34,6 +38,9 @@ const MemberPage = () => {
       console.error("Error fetching members:", error);
     }
   };
+  
+
+  
 
   useEffect(() => {
     fetchMembers();
@@ -74,40 +81,14 @@ const MemberPage = () => {
   };
 
   
-  const handlePrint = (member) => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>Member Details</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h2 { text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          table, th, td { border: 1px solid black; padding: 10px; text-align: left; }
-        </style>
-      </head>
-      <body>
-        <h2>Member Details</h2>
-        <table>
-          <tr><th>Title</th><td>${member.Title}</td></tr>
-          <tr><th>First Name</th><td>${member.FirstName}</td></tr>
-          <tr><th>Last Name</th><td>${member.LastName}</td></tr>
-          <tr><th>Date of Birth</th><td>${member.DOB}</td></tr>
-          <tr><th>Gender</th><td>${member.Gender}</td></tr>
-          <tr><th>Phone</th><td>${member.PhoneNumber}</td></tr>
-          <tr><th>Email</th><td>${member.Email}</td></tr>
-        </table>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.close();
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const [showReceipt, setShowReceipt] = useState(false);  // State to control modal visibility
+
+  const handlePrintClick = () => {
+    setShowReceipt(true);  // Open the ReceiptForm when the button is clicked
+  };
+
+  const handleClosePopup = () => {
+    setShowReceipt(false);  // Close the modal
   };
   
 
@@ -172,31 +153,67 @@ const MemberPage = () => {
     }
   };
 
+  const handleFormSubmit = (receiptData) => {
+    fetch("http://localhost:3000/api/receipts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(receiptData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to generate receipt");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        alert(`Receipt generated successfully!`);
+        setReceipts((prevReceipts) => [...prevReceipts, receiptData]); // Add new receipt to the table
+        setIsFormVisible(false); // Hide the form after submitting
+        setShowReceipt(false);
+      })
+      .catch((error) => {
+        alert(`Error: ${error.message}`);
+      });
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <nav className="text-white fixed bg-white p-6 border-b-2 top-0 justify-center left-0 border-gray-300 -mt-7 z-10  w-full ">
-        <div className="flex items-center  w-[84%] ml-[15%]  bg-white justify-between">
-          <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-[66px]  text-black">
-            POS-Dashboard
-          </h1>
-
-          <div className="hidden lg:block flex-grow max-w-sm ml-4 lg:ml-[530px]">
-            <input
-              type="text"
-              placeholder="Search..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 bg-gray-100 rounded-3xl mt-6 border border-gray-300"
-            />
-          </div>
-
-          <div className="relative ml-4 lg:ml-6 mt-5">
-                <img src={cart} alt="Cart" className="w-10 h-10" />
-                 <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
-                    3 {/* Dynamic count */}
-                 </span>
-          </div>
-        </div>
-      </nav>
+      <nav className="text-white bg-white  fixed w-full p-6 border-b-2 top-0 left-0 border-gray-300 -mt-7 z-16">
+              <div className="flex items-center  justify-between">
+                {/* Logo */}
+                <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-4 lg:ml-[244px] text-black">
+                  POS-Dashboard
+                </h1>
+      
+                {/* Search Bar */}
+                <div className="hidden lg:block flex-grow max-w-sm ml-4 lg:ml-[530px]">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full p-3 bg-gray-100 rounded-3xl mt-6 border pl-7 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+      
+                {/* Cart Icon */}
+                <div className="relative ml-4 -lg:ml-4 mt-5">
+                  <img src={cart} alt="Cart" className="w-10 h-10" />
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                      3 {/* Dynamic count */}
+                  </span>
+                </div>
+              </div>
+      
+              {/* Search Bar for Mobile */}
+              <div className="block lg:hidden px-4 mt-3">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full p-3 bg-gray-100 rounded-3xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </nav>
 
       <div className="mt-24">
         <div className="flex  justify-end mb-6">
@@ -246,7 +263,7 @@ const MemberPage = () => {
                         <FaEdit />
                       </button>
                       <button
-                          onClick={() => handlePrint(member)}
+                          onClick={handlePrintClick}
                           className="px-3 py-1 bg-[#FD9400] text-white rounded-2xl hover:bg-blue-600 transition duration-300"
                       >
                          Print
@@ -260,190 +277,207 @@ const MemberPage = () => {
         </div>
       </div>
 
+      {/* Modal / Popup */}
+        {showReceipt && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-[25%] max-w-4xl relative">
+              <button 
+                onClick={handleClosePopup} 
+                className="absolute top-2 right-2 text-gray-700 text-xl"
+              >
+                &times;
+              </button>
+              <ReceiptForm onSubmit={handleFormSubmit} />
+            </div>
+          </div>
+        )}
+
+
       {isModalOpen && (
   <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl relative">
-      <button
-        onClick={() => setIsModalOpen(false)}
-        className="absolute top-2 right-2 text-gray-700 text-xl"
-      >
-        &times;
-      </button>
+  <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl relative">
+    <button
+      onClick={() => setIsModalOpen(false)}
+      className="absolute top-2 right-2 text-gray-700 text-xl"
+    >
+      &times;
+    </button>
 
-      <h2 className="text-2xl font-bold text-center mb-6">
-        {isEditing ? "Edit Member" : "Add Member"}
-      </h2>
+    <h2 className="text-xl font-semibold text-center mb-4">
+      {isEditing ? "Edit Member" : "Add Member"}
+    </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Title */}
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Title */}
+      <div>
+        <label className="block text-gray-700 text-sm">Title</label>
+        <input
+          type="text"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          className="w-full p-1.5 border rounded text-sm"
+          required
+        />
+      </div>
+
+      {/* First Name & Last Name */}
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-gray-700">Title</label>
+          <label className="block text-gray-700 text-sm">First Name</label>
           <input
             type="text"
-            name="title"
-            value={formData.title}
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
             required
           />
         </div>
-
-        {/* First Name & Last Name */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700">First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700">Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Date of Birth */}
         <div>
-          <label className="block text-gray-700">Date of Birth</label>
-          <input
-            type="date"
-            name="dob"
-            value={formData.dob}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        {/* Gender */}
-        <div>
-          <label className="block text-gray-700">Gender</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
-
-        {/* Phone Number & Email */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700">Phone Number</label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Address Fields */}
-        <div>
-          <label className="block text-gray-700">Street</label>
+          <label className="block text-gray-700 text-sm">Last Name</label>
           <input
             type="text"
-            name="street"
-            value={formData.street}
+            name="lastName"
+            value={formData.lastName}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-1.5 border rounded text-sm"
             required
           />
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700">City</label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700">State</label>
-            <input
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-        </div>
+      {/* Date of Birth */}
+      <div>
+        <label className="block text-gray-700 text-sm">Date of Birth</label>
+        <input
+          type="date"
+          name="dob"
+          value={formData.dob}
+          onChange={handleChange}
+          className="w-full p-1.5 border rounded text-sm"
+          required
+        />
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700">Postal Code</label>
-            <input
-              type="text"
-              name="postalCode"
-              value={formData.postalCode}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700">Country</label>
-            <input
-              type="text"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-        </div>
+      {/* Gender */}
+      <div>
+        <label className="block text-gray-700 text-sm">Gender</label>
+        <select
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+          className="w-full p-1.5 border rounded text-sm"
+          required
+        >
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="px-6 py-2 bg-[#FD9400] text-white rounded-lg hover:bg-blue-700"
-          >
-            {isEditing ? "Update Member" : "Add Member"}
-          </button>
+      {/* Phone Number & Email */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-gray-700 text-sm">Phone Number</label>
+          <input
+            type="tel"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
         </div>
-      </form>
-    </div>
+        <div>
+          <label className="block text-gray-700 text-sm">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Address Fields */}
+      <div>
+        <label className="block text-gray-700 text-sm">Street</label>
+        <input
+          type="text"
+          name="street"
+          value={formData.street}
+          onChange={handleChange}
+          className="w-full p-1.5 border rounded text-sm"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-gray-700 text-sm">City</label>
+          <input
+            type="text"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 text-sm">State</label>
+          <input
+            type="text"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-gray-700 text-sm">Postal Code</label>
+          <input
+            type="text"
+            name="postalCode"
+            value={formData.postalCode}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 text-sm">Country</label>
+          <input
+            type="text"
+            name="country"
+            value={formData.country}
+            onChange={handleChange}
+            className="w-full p-1.5 border rounded text-sm"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-[#FD9400] text-white rounded-lg hover:bg-blue-700"
+        >
+          {isEditing ? "Update Member" : "Add Member"}
+        </button>
+      </div>
+    </form>
   </div>
+</div>
+
 )}
 
     </div>

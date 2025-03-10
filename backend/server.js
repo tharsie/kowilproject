@@ -1,29 +1,16 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const sql = require("mssql");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
+const { sql, poolPromise,dbConfig } = require('./db');
 app.use(express.json());
-
-
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(bodyParser.json());
 
-const dbConfig = {
-  user: "KowilDb",
-  password: "Welcome@2025",
-  server: "184.75.213.133",
-  database: "TestData",
-  port: 1623,
-  options: {
-    encrypt: true,
-    trustServerCertificate: true,
-  },
-};
 
 
 
@@ -64,9 +51,11 @@ app.post("/api/members", async (req, res) => {
   }
 
   try {
-    // Connect to MS SQL Server
-    await sql.connect(dbConfig);
-    const transaction = new sql.Transaction();
+    // Get the pool object (ensure the pool is already initialized elsewhere in your app)
+    const pool = await poolPromise;
+
+    // Start a transaction using the pooled connection
+    const transaction = new sql.Transaction(pool);
 
     try {
       await transaction.begin();
@@ -149,57 +138,35 @@ app.post("/api/members", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
-  } finally {
-    sql.close();
   }
 });
 
 
 
 
+
 // Route to fetch all members
+// Example: Using connection pool for fetching members and their addresses
 app.get("/api/members", async (req, res) => {
   try {
-    // Connect to the MS SQL Server
-    await sql.connect(dbConfig);
+    // Get the pool object (ensure the pool is already initialized elsewhere in your app)
+    const pool = await poolPromise;
 
     // Query to get all members with their address details
-    const result = await sql.query(`
-      SELECT 
-        m.MemberId, 
-        m.Title, 
-        m.FirstName, 
-        m.LastName, 
-        m.DOB, 
-        m.Gender, 
-        m.PhoneNumber, 
-        m.Email, 
-        m.IsEdit, 
-        m.IsActive, 
-        m.CreatedDate, 
-        m.CreatedBy, 
-        m.UpdatedDate, 
-        m.UpdatedBy,
-        a.AddressId, 
-        a.Street, 
-        a.City, 
-        a.State, 
-        a.PostalCode, 
-        a.Country
-      FROM tblMember m
-      LEFT JOIN tblAddress a ON m.AddressId = a.AddressId
-    `);
+    const result = await pool.request()
+      .query(`
+        SELECT * FROM tblMember m
+        LEFT JOIN tblAddress a ON m.AddressId = a.AddressId
+      `);
 
     // Respond with the combined list of members and their addresses
     res.status(200).json(result.recordset); // result.recordset contains the rows returned
   } catch (err) {
     console.error("Error fetching members:", err);
     res.status(500).json({ error: "Database error" });
-  } finally {
-    // Close the database connection
-    sql.close();
   }
 });
+
 
 
 // Route to update member details
@@ -305,10 +272,14 @@ app.post("/api/register", async (req, res) => {
   }
 
   try {
-    await sql.connect(dbConfig);
+    // Use the poolPromise to get a connection from the pool
+    const pool = await poolPromise;
 
     // Check if email already exists
-    const result = await sql.query`SELECT * FROM Users WHERE email = ${email}`;
+    const result = await pool.request()
+      .input('email', sql.NVarChar, email)
+      .query("SELECT * FROM Users WHERE email = @email");
+
     if (result.recordset.length > 0) {
       return res.status(400).json({ error: "Email already registered!" });
     }
@@ -317,17 +288,24 @@ app.post("/api/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert user with ClientId = 1
-    await sql.query`
-      INSERT INTO Users (firstName, lastName, phoneNumber, email, password, ClientId)
-      VALUES (${firstName}, ${lastName}, ${phoneNumber}, ${email}, ${hashedPassword}, 1)
-    `;
+    await pool.request()
+      .input('firstName', sql.NVarChar, firstName)
+      .input('lastName', sql.NVarChar, lastName)
+      .input('phoneNumber', sql.NVarChar, phoneNumber)
+      .input('email', sql.NVarChar, email)
+      .input('hashedPassword', sql.NVarChar, hashedPassword)
+      .input('ClientId', sql.Int, 1)
+      .query(`
+        INSERT INTO Users (firstName, lastName, phoneNumber, email, password, ClientId)
+        VALUES (@firstName, @lastName, @phoneNumber, @email, @hashedPassword, @ClientId)
+      `);
 
     res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
     console.error("Error during registration:", err);
     res.status(500).json({ error: "Database error!" });
   } finally {
-    sql.close();
+    // Connection is automatically managed by pool, no need to explicitly close it
   }
 });
 
@@ -380,9 +358,9 @@ app.post("/api/receipt-types", async (req, res) => {
   }
 
   try {
-    // Connect to the MS SQL Server
-    await sql.connect(dbConfig);
-    const transaction = new sql.Transaction();
+    // Use the connection pool
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);  // Use the transaction with the pool
 
     await transaction.begin();
 
@@ -427,11 +405,9 @@ app.post("/api/receipt-types", async (req, res) => {
 
         return priceRequest.query(priceQuery);
       });
-
       // Execute all price queries
       await Promise.all(priceQueries);
     }
-
     // Commit the transaction
     await transaction.commit();
 
@@ -440,24 +416,20 @@ app.post("/api/receipt-types", async (req, res) => {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
   } finally {
-    sql.close();
+    // No need to explicitly call sql.close() here, because the connection pool handles closing
   }
 });
 
 
 
-
-
 //get receipt type
-
-
 app.get("/api/receipt-types", async (req, res) => {
   try {
-    // Connect to the MS SQL Server
-    await sql.connect(dbConfig);
+    // Use the connection pool
+    const pool = await poolPromise;
 
     // Query to get all receipt types
-    const result = await sql.query("SELECT name FROM receipt_types");
+    const result = await pool.request().query("SELECT name FROM receipt_types");
 
     // Check if there are results and send as response
     if (result.recordset.length > 0) {
@@ -468,9 +440,88 @@ app.get("/api/receipt-types", async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to fetch receipt types" });
-  } finally {
-    // Close the database connection
-    await sql.close();
+  }
+});
+
+
+app.post("/api/receipts", async (req, res) => {
+  const {
+    name,
+    amount,
+    amountInWords,
+    date,
+    receiptType,
+    dropdownValue,
+    secondDropdownValue,
+    selectedRadio,
+  } = req.body;
+
+  // Validate required fields
+  if (!name || (!amount && receiptType !== "அர்ச்சனை") || !date || !receiptType) {
+    return res.status(400).json({ error: "Name, Date, and Receipt Type are required. Amount is required unless Receipt Type is 'அர்ச்சனை'." });
+  }
+
+  try {
+    // Use the connection pool
+    const pool = await poolPromise;
+
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      // Insert the receipt into tblReceipts
+      const receiptResult = await transaction.request()
+        .input("Name", sql.NVarChar(255), name)
+        .input("Amount", sql.Decimal(10,2), amount || null)
+        .input("AmountInWords", sql.NVarChar(500), amountInWords || null)
+        .input("Date", sql.Date, date)
+        .input("ReceiptType", sql.NVarChar(255), receiptType)
+        .input("DropdownValue", sql.NVarChar(255), dropdownValue || null)
+        .input("SecondDropdownValue", sql.NVarChar(255), secondDropdownValue || null)
+        .input("SelectedRadio", sql.NVarChar(255), selectedRadio || null)
+        .query(`
+          INSERT INTO tblReceipts (name, amount, amountInWords, date, receiptType, 
+                                   dropdownValue, secondDropdownValue, selectedRadio)
+          OUTPUT INSERTED.id
+          VALUES (@Name, @Amount, @AmountInWords, @Date, @ReceiptType, 
+                  @DropdownValue, @SecondDropdownValue, @SelectedRadio);
+        `);
+
+      const receiptId = receiptResult.recordset[0].id; // Get inserted ID
+
+      // Commit the transaction
+      await transaction.commit();
+
+      res.status(201).json({
+        message: "Receipt added successfully!",
+        receiptId: receiptId,
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction Error:", error);
+      res.status(500).json({ error: "Database transaction error" });
+    }
+  } catch (err) {
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
+//receipt get
+
+app.get("/api/receipts", async (req, res) => {
+  try {
+    console.log("Fetching receipts from database...");
+    const pool = await sql.connect(dbConfig);
+
+    const result = await pool.request().query("SELECT * FROM tblReceipts");
+    console.log("Receipts fetched successfully!");
+
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Error fetching receipts:", error);
+    res.status(500).json({ error: "Failed to fetch receipts", details: error.message });
   }
 });
 

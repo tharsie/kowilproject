@@ -16,22 +16,7 @@ const Settings = () => {
               Receipt Type
             </Link>
           </li>
-          <li>
-            <Link
-              to="receipt-type"
-              className="text-lg hover:text-blue-200 transition-colors duration-300"
-            >
-              Another Setting
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="receipt-type"
-              className="text-lg hover:text-blue-200 transition-colors duration-300"
-            >
-              More Settings
-            </Link>
-          </li>
+          
         </ul>
       </div>
 
