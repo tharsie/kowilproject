@@ -67,7 +67,8 @@ const ReceiptForm = ({ onSubmit }) => {
     doc.text(`Selected Radio Option: ${selectedRadio}`, 20, 100);
 
     // Save the PDF
-    doc.save("receipt.pdf");
+    doc.save(`${name}_receipt.pdf`);
+
   };
 
   const handleFormSubmit = (e) => {

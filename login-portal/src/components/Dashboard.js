@@ -57,11 +57,11 @@ const Dashboard = () => {
           </li>
           <li className="text-black text-[18px]  p-4 -mt-4 ml-2 boarder-2 rounded-xl">
             <Link
-              to="transaction"
+              to="donations"
               className="block cursor-pointer rounded-xl flex font-semibold p-3 hover:bg-[#FD940012]"
             >
               <img src={addressbook4} alt="Cart" className="w-8 h-8 mr-3" />
-              Transaction
+              Donations
             </Link>
           </li>
           <li className="text-black text-[18px] p-4 -mt-4 ml-2">

@@ -1,5 +1,5 @@
 import { Link, Outlet } from "react-router-dom";
-import ReceiptTypeSettings from "./ReceiptTypeSettings"; // Import Receipt Type Settings
+import ReceiptTypeSettings from "../pages/ReceiptTypeSettings"; // Import Receipt Type Settings
 
 const Settings = () => {
   return (
@@ -10,13 +10,20 @@ const Settings = () => {
         <ul className="space-y-4">
           <li>
             <Link
-              to="receipt-type" // This will render ReceiptTypeSettings when clicked
+              to="receipt-type"
               className="text-lg hover:text-blue-200 transition-colors duration-300"
             >
               Receipt Type
             </Link>
           </li>
-          
+          <li>
+            <Link
+              to="event-details" 
+              className="text-lg hover:text-blue-200 transition-colors duration-300"
+            >
+              Event Details
+            </Link>
+          </li>
         </ul>
       </div>
 

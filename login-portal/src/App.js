@@ -5,12 +5,13 @@ import { ReceiptProvider } from "./context/ReceiptContext"; // ✅ Correct impor
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
-import Member from "./components/Member";
-import Receipt from "./components/Receipt";
-import Transaction from "./components/Transaction";
+import Member from "./pages/Member";
+import Receipt from "./pages/Receipt";
+import Donations from "./pages/Donations";
 import Settings from "./components/Settings";
-import ReceiptTypeSettings from "./components/ReceiptTypeSettings";
-import DashboardOverview from "./components/DashboardOverview";
+import ReceiptTypeSettings from "./pages/ReceiptTypeSettings";
+import DashboardOverview from "./pages/DashboardOverview";
+import EventDetails from "./pages/EventDetails"
 const App = () => {
   return (
     <ReceiptProvider>
@@ -24,7 +25,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />}>
             <Route path="member" element={<Member />} />
             <Route path="receipt" element={<Receipt />} />
-            <Route path="transaction" element={<Transaction />} />
+            <Route path="donations" element={<Donations />} />
             <Route index element={<DashboardOverview />} /> {/* Default route to show the overview */}
           <Route path="overview" element={<DashboardOverview />} /> {/* For navigating to /dashboard/overview */}
             
@@ -32,6 +33,7 @@ const App = () => {
             <Route path="settings" element={<Settings />}>
               {/* Nested route for Receipt Type Settings */}
               <Route path="receipt-type" element={<ReceiptTypeSettings />} />
+              <Route path="event-details" element={<EventDetails />} />
             </Route>
           </Route>
         </Routes>

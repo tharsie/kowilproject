@@ -1,21 +1,44 @@
+const sql = require("mssql");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
-const { sql, poolPromise,dbConfig } = require('./db');
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(bodyParser.json());
+const port = 3000;
 
 
+const dbConfig = {
+  user: "KowilDb",
+  password: "Welcome@2025",
+  server: "184.75.213.133",
+  database: "TestData",
+  port: 1623,
+  options: {
+    encrypt: true,
+    trustServerCertificate: true,
+  },
+};
+
+// Create a pool connection
+const poolPromise = new sql.ConnectionPool(dbConfig)
+.connect()
+.then((pool) => {
+  console.log("Connected to the database");
+  return pool;
+})
+.catch((err) => {
+  console.error("Database connection failed:", err);
+  process.exit(1);
+});
 
 
 //adding members
-// Route to handle POST request for adding a member
 app.post("/api/members", async (req, res) => {
   const {
     title,
@@ -142,9 +165,6 @@ app.post("/api/members", async (req, res) => {
 });
 
 
-
-
-
 // Route to fetch all members
 // Example: Using connection pool for fetching members and their addresses
 app.get("/api/members", async (req, res) => {
@@ -155,8 +175,23 @@ app.get("/api/members", async (req, res) => {
     // Query to get all members with their address details
     const result = await pool.request()
       .query(`
-        SELECT * FROM tblMember m
-        LEFT JOIN tblAddress a ON m.AddressId = a.AddressId
+        SELECT 
+          m.MemberId, 
+          m.Title, 
+          m.FirstName, 
+          m.LastName, 
+          m.Dob, 
+          m.Gender, 
+          m.PhoneNumber, 
+          m.Email, 
+          a.Street, 
+          a.City, 
+          a.State, 
+          a.PostalCode, 
+          a.Country
+        FROM tblMember m
+        LEFT JOIN tblAddress a ON m.AddressId = a.AddressId;
+
       `);
 
     // Respond with the combined list of members and their addresses
@@ -171,56 +206,130 @@ app.get("/api/members", async (req, res) => {
 
 // Route to update member details
 app.put("/api/members/:id", async (req, res) => {
-  const { id } = req.params;
-  const { title, firstName, lastName, email, mobile, dob, gender, street, city, province, country } = req.body;
+  console.log("Received data:", req.body); // Debugging request body
 
-  // Check if all fields are provided
-  if (!title || !firstName || !lastName || !email || !mobile || !dob || !gender || !street || !city || !province || !country) {
+  const { id } = req.params;
+  const {
+    title,
+    firstName,
+    lastName,
+    dob,
+    gender,
+    phoneNumber,
+    email,
+    street,
+    city,
+    state,
+    postalCode,
+    country
+  } = req.body;
+
+  // Check if all required fields are provided
+  if (
+    !title ||
+    !firstName ||
+    !lastName ||
+    !dob ||
+    !gender ||
+    !phoneNumber ||
+    !email ||
+    !street ||
+    !city ||
+    !state ||
+    !postalCode ||
+    !country
+  ) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    // Connect to the MS SQL Server
-    await sql.connect(dbConfig);
+    // Get the pool object (ensure pool is initialized)
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);
 
-    // SQL query to update the member details
-    const query = `
-      UPDATE Members
-      SET title = @title, firstName = @firstName, lastName = @lastName, email = @email, mobile = @mobile, 
-          dob = @dob, gender = @gender, street = @street, city = @city, province = @province, country = @country
-      WHERE id = @id;
-    `;
+    try {
+      await transaction.begin();
 
-    // Prepare and execute the SQL query with parameterized values
-    const result = await sql.query(
-      `DECLARE @id INT, @title NVARCHAR(50), @firstName NVARCHAR(100), @lastName NVARCHAR(100), @email NVARCHAR(100),
-               @mobile NVARCHAR(20), @dob DATE, @gender NVARCHAR(10), @street NVARCHAR(255), @city NVARCHAR(100),
-               @province NVARCHAR(100), @country NVARCHAR(100);
+      // Update tblMember details
+      const memberResult = await transaction.request()
+        .input("MemberId", sql.Int, id)
+        .input("Title", sql.NVarChar(50), title)
+        .input("FirstName", sql.NVarChar(100), firstName)
+        .input("LastName", sql.NVarChar(100), lastName)
+        .input("DOB", sql.Date, dob)
+        .input("Gender", sql.NVarChar(10), gender)
+        .input("PhoneNumber", sql.NVarChar(20), phoneNumber)
+        .input("Email", sql.NVarChar(100), email)
+        .input("UpdatedDate", sql.DateTime, new Date())
+        .input("UpdatedBy", sql.NVarChar(100), "Admin")
+        .query(`
+          UPDATE tblMember
+          SET Title = @Title,
+              FirstName = @FirstName,
+              LastName = @LastName,
+              DOB = @DOB,
+              Gender = @Gender,
+              PhoneNumber = @PhoneNumber,
+              Email = @Email,
+              UpdatedDate = @UpdatedDate,
+              UpdatedBy = @UpdatedBy
+          WHERE MemberId = @MemberId;
+        `);
 
-       SET @id = ${id};  -- Parameterize the id value
-       SET @title = '${title}';
-       SET @firstName = '${firstName}';
-       SET @lastName = '${lastName}';
-       SET @email = '${email}';
-       SET @mobile = '${mobile}';
-       SET @dob = '${dob}';
-       SET @gender = '${gender}';
-       SET @street = '${street}';
-       SET @city = '${city}';
-       SET @province = '${province}';
-       SET @country = '${country}';
+      // Check if member exists
+      if (memberResult.rowsAffected[0] === 0) {
+        await transaction.rollback();
+        return res.status(404).json({ error: "Member not found" });
+      }
 
-       ${query}`
-    );
+      // Get AddressId linked to the MemberId
+      const addressResult = await transaction.request()
+        .input("MemberId", sql.Int, id)
+        .query(`SELECT AddressId FROM tblMember WHERE MemberId = @MemberId;`);
 
-    // Respond with a success message
-    res.status(200).json({ message: "Member updated successfully!" });
+      if (!addressResult.recordset.length) {
+        await transaction.rollback();
+        return res.status(404).json({ error: "Address not found for this member" });
+      }
+
+      const addressId = addressResult.recordset[0].AddressId;
+
+      // Update tblAddress
+      await transaction.request()
+        .input("AddressId", sql.Int, addressId)
+        .input("Street", sql.NVarChar(255), street)
+        .input("City", sql.NVarChar(100), city)
+        .input("State", sql.NVarChar(100), state)
+        .input("PostalCode", sql.NVarChar(20), postalCode)
+        .input("Country", sql.NVarChar(100), country)
+        .query(`
+          UPDATE tblAddress
+          SET Street = @Street,
+              City = @City,
+              State = @State,
+              PostalCode = @PostalCode,
+              Country = @Country
+          WHERE AddressId = @AddressId;
+        `);
+
+      // Commit the transaction
+      await transaction.commit();
+
+      // Success response
+      res.status(200).json({
+        message: "Member updated successfully!",
+        memberId: id,
+        addressId: addressId
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction Error:", error);
+      res.status(500).json({ error: "Database transaction error" });
+    }
   } catch (err) {
-    console.error("Error updating member:", err);
-    res.status(500).json({ error: "Database error" });
-  } finally {
-    // Close the database connection
-    sql.close();
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
   }
 });
 
@@ -509,7 +618,6 @@ app.post("/api/receipts", async (req, res) => {
 });
 
 //receipt get
-
 app.get("/api/receipts", async (req, res) => {
   try {
     console.log("Fetching receipts from database...");
@@ -523,6 +631,133 @@ app.get("/api/receipts", async (req, res) => {
     console.error("Error fetching receipts:", error);
     res.status(500).json({ error: "Failed to fetch receipts", details: error.message });
   }
+});
+
+// POST Route to Add a Donation
+app.post("/api/donations", async (req, res) => {
+  const { name, phoneNumber, reason, amount } = req.body;
+
+  if (!name || !phoneNumber || !reason || !amount) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Create connection to SQL Server using dbConfig
+    const pool = await sql.connect(dbConfig);
+
+    // Insert the new donation into the database
+    const result = await pool.request()
+      .input("name", sql.NVarChar, name)
+      .input("phoneNumber", sql.NVarChar, phoneNumber)
+      .input("reason", sql.NVarChar, reason)
+      .input("amount", sql.Float, amount)
+      .query(`
+        INSERT INTO tblDonations (name, phoneNumber, reason, amount)
+        VALUES (@name, @phoneNumber, @reason, @amount);
+      `);
+
+    // Return success response if donation is added
+    res.status(201).json({
+      message: "Donation added successfully!",
+      donation: {
+        name,
+        phoneNumber,
+        reason,
+        amount,
+      },
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  } finally {
+    sql.close();
+  }
+});
+
+
+
+app.get('/api/donations', async (req, res) => {
+  try {
+    // Create a connection to the database
+    const pool = await sql.connect(dbConfig);
+
+    // Fetch all donations from the database
+    const result = await pool.request().query('SELECT * FROM tblDonations');
+
+    // Return the fetched donations in the response
+    res.status(200).json({
+      donations: result.recordset, // Return the rows of the donations table
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  } finally {
+    sql.close();
+  }
+});
+
+
+
+app.post("/api/events", async (req, res) => {
+  const { name, date, organizer } = req.body;
+
+  if (!name || !date || !organizer) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Create connection to SQL Server using dbConfig
+    const pool = await sql.connect(dbConfig);
+
+    // Insert new event into the database
+    const result = await pool.request()
+      .input("name", sql.NVarChar, name)
+      .input("date", sql.Date, date)
+      .input("organizer", sql.NVarChar, organizer)
+      .query(`
+        INSERT INTO tblEvents (name, date, organizer)
+        VALUES (@name, @date, @organizer);
+      `);
+
+    // If the event was added successfully, return a success response
+    res.status(201).json({
+      message: "Event added successfully!",
+      event: {
+        name,
+        date,
+        organizer,
+      },
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  } finally {
+    sql.close();
+  }
+});
+
+// Route to fetch all events
+app.get("/api/events", async (req, res) => {
+  try {
+    // Create connection to SQL Server using dbConfig
+    const pool = await sql.connect(dbConfig);
+
+    // Query to get all events
+    const result = await pool.request().query("SELECT * FROM tblEvents");
+
+    // Return the events data as a response
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  } finally {
+    sql.close();
+  }
+});
+
+
+app.get("/", (req, res) => {
+  res.send("Server is running!");
 });
 
 // Start the server
