@@ -1,4 +1,5 @@
 import React from "react";
+import { useState,useEffect } from "react";
 import Rect11 from "../assets/Rectangle11.png";
 import Rect12 from "../assets/Rectangle12.png";
 import Rect13 from "../assets/Rectangle13.png";
@@ -11,6 +12,46 @@ import { useNavigate } from "react-router-dom";
 const DashboardOverview = () => {
 
   const navigate = useNavigate();
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [eventName, setEventName] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [organizer, setOrganizer] = useState("");
+  
+  const [topDonors, setTopDonors] = useState([]);
+
+  useEffect(() => {
+    const fetchTopDonors = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/top-donors");
+        if (!response.ok) {
+          throw new Error("Failed to fetch top donors");
+        }
+        const data = await response.json();
+        setTopDonors(data);
+      } catch (error) {
+        console.error("Error fetching top donors:", error);
+      }
+    };
+
+    fetchTopDonors();
+  }, []);
+
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/events");
+        if (!response.ok) throw new Error("Failed to fetch upcoming events");
+        const data = await response.json();
+        setUpcomingEvents(data);
+      } catch (error) {
+        console.error("Error fetching upcoming events:", error);
+      }
+    };
+  
+    fetchUpcomingEvents();
+  }, []);
+
+  
 
   const handleRedirect = () => {  
     navigate("/dashboard/receipt"); // Replace with your target route
@@ -114,31 +155,26 @@ const DashboardOverview = () => {
         {/* Bottom Section */}
         <div className="flex flex-col lg:flex-row justify-between gap-4">
           {/* Top Donators */}
-          <div className=" p-4 w-[60%] h-[302px] bg-[#FD94000D] rounded-xl">
+          <div className="p-4 w-[60%] h-[302px] bg-[#FD94000D] rounded-xl">
             <div className="ml-[2%]">
-            <h1 className="text-2xl font-bold">Top Donators</h1>
-            <div className="ml-[3%]">           
-            <div className="bg-white mt-5 ml-0 w-[80%] pl-9 rounded-full h-1/6 flex justify-between pt-2 ">
-            <img src={premiumpng} alt="Cart" className="w-8 -ml-7 h-8" />
-            <p className="text-black relative font-bold -ml-[35%] z-10">Shanker Sivanathan</p>
-            <p className="text-black relative font-semibold mr-6 z-10">LKR 100,000</p>
-            </div>
-            <div className="flex justify-between w-3/4 font-semibold">
-            <p className="text-black pt-5 relative z-10">Mahendran Ravikumar</p>
-            <p className="text-black pt-5 relative z-10">LKR 50,000</p>
-            </div>
-            <div className="flex justify-between w-3/4 font-semibold">
-            <p className="text-black pt-5 relative z-10">Thushidan Pathmanathan</p>
-            <p className="text-black pt-5 relative z-10">LKR 20,000</p>
-            </div>
-            <div className="flex justify-between w-3/4 font-semibold">
-            <p className="text-black pt-5 relative z-10">Thushidan Pathmanathan</p>
-            <p className="text-black pt-5 relative z-10">LKR 20,000</p>
-            </div>
-            <div className="flex justify-between w-3/4 font-semibold">
-            <p className="text-[#FD9400] pt-5 relative z-10">See more . . . .</p>
-            </div>
-            </div>
+              <h1 className="text-2xl font-bold">Top Donators</h1>
+              <div className="ml-[3%]">
+                {topDonors.length > 0 && (
+                  <div className="bg-white mt-5 w-[80%] pl-9 rounded-full h-1/6 flex justify-between pt-2">
+                    <img src={premiumpng} alt="Top Donor" className="w-8 -ml-7 h-8" />
+                    <p className="text-black relative font-bold -ml-[35%] z-10">{topDonors[0].name}</p>
+                    <p className="text-black relative font-semibold mr-6 z-10">LKR {topDonors[0].totalDonated}</p>
+                  </div>
+                )}
+                {topDonors.slice(1).map((donor, index) => (
+                  <div key={index} className="flex justify-between w-3/4 font-semibold">
+                    <p className="text-black pt-5 relative z-10">{donor.name}</p>
+                    <p className="text-black pt-5 relative z-10">LKR {donor.totalDonated}</p>
+                  </div>
+                ))}
+                <div className="flex justify-between w-3/4 font-semibold">
+                </div>
+              </div>
             </div>
           </div>
 
@@ -147,15 +183,22 @@ const DashboardOverview = () => {
             className="border-2 p-4 w-[35%] h-[302px] rounded-xl relative bg-cover bg-center"
             style={{ backgroundImage: `url(${Rect17})` }}
           >
-            <div className="absolute inset-0 bg-black  opacity-60 rounded-xl"></div>
-            <h1 className="text-xl font-bold text-white relative z-10">
-              Up coming events
-            </h1>
-            <p className="text-white pt-5 font-semibold relative z-10">1. Thiruvizha - 02/08/2025</p>
-            <p className="text-white pt-2 font-semibold relative z-10">2. Thiruvizha - 02/08/2025</p>
-            <p className="text-white pt-2 font-semibold relative z-10">3. Thiruvizha - 02/08/2025</p>
-            <p className="text-white pt-2 font-semibold relative z-10">4. Thiruvizha - 02/08/2025</p>
-            <p className="text-white pt-2 font-semibold relative z-10">5. Thiruvizha - 02/08/2025</p>
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black opacity-60 rounded-xl"></div>
+
+            {/* Title */}
+            <h1 className="text-xl font-bold text-white relative z-10">Upcoming Events</h1>
+
+            {/* Fetch and Display Upcoming Events */}
+            {upcomingEvents.length > 0 ? (
+              upcomingEvents.slice(0, 6).map((event, index) => (
+                <p key={event.id} className="text-white pt-2 font-semibold relative z-10">
+                  {index + 1}. {event.name} - {new Date(event.date).toLocaleDateString()}
+                </p>
+              ))
+            ) : (
+              <p className="text-white pt-2 font-semibold relative z-10">No upcoming events.</p>
+            )}
           </div>
         </div>
       </div>

@@ -161,6 +161,8 @@ app.post("/api/members", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
+  }finally {
+    sql.close();
   }
 });
 
@@ -199,6 +201,8 @@ app.get("/api/members", async (req, res) => {
   } catch (err) {
     console.error("Error fetching members:", err);
     res.status(500).json({ error: "Database error" });
+  }finally {
+    sql.close();
   }
 });
 
@@ -330,6 +334,8 @@ app.put("/api/members/:id", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
+  }finally {
+    sql.close();
   }
 });
 
@@ -414,7 +420,7 @@ app.post("/api/register", async (req, res) => {
     console.error("Error during registration:", err);
     res.status(500).json({ error: "Database error!" });
   } finally {
-    // Connection is automatically managed by pool, no need to explicitly close it
+    sql.close();
   }
 });
 
@@ -451,6 +457,8 @@ app.post("/api/login", async (req, res) => {
   } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Internal server error" });
+  }finally {
+    sql.close();
   }
 });
 
@@ -525,7 +533,7 @@ app.post("/api/receipt-types", async (req, res) => {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
   } finally {
-    // No need to explicitly call sql.close() here, because the connection pool handles closing
+    sql.close();
   }
 });
 
@@ -549,6 +557,9 @@ app.get("/api/receipt-types", async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to fetch receipt types" });
+  }
+  finally {
+    sql.close();
   }
 });
 
@@ -615,17 +626,16 @@ app.post("/api/receipts", async (req, res) => {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
   }
+  finally {
+    sql.close();
+  }
 });
 
 //receipt get
 app.get("/api/receipts", async (req, res) => {
   try {
-    console.log("Fetching receipts from database...");
-    const pool = await sql.connect(dbConfig);
-
+    const pool = await poolPromise; // Use the pool
     const result = await pool.request().query("SELECT * FROM tblReceipts");
-    console.log("Receipts fetched successfully!");
-
     res.status(200).json(result.recordset);
   } catch (error) {
     console.error("Error fetching receipts:", error);
@@ -752,6 +762,25 @@ app.get("/api/events", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   } finally {
     sql.close();
+  }
+});
+
+app.get("/api/top-donors", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+
+    const result = await pool.request().query(`
+      SELECT TOP 5 name, SUM(amount) AS totalDonated
+      FROM tblReceipts
+      WHERE amount IS NOT NULL
+      GROUP BY name
+      ORDER BY totalDonated DESC
+    `);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    console.error("Error fetching top donors:", err);
+    res.status(500).json({ error: "Database query failed" });
   }
 });
 
