@@ -340,45 +340,7 @@ app.put("/api/members/:id", async (req, res) => {
 });
 
 
-// Route to delete a member
-app.delete("/api/members/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Connect to the MS SQL Server
-    await sql.connect(dbConfig);
-
-    // SQL query to delete the member from the database
-    const query = `
-      DELETE FROM members WHERE id = @id;
-    `;
-
-    // Execute the SQL query with parameterized values
-    const result = await sql.query(
-      `DECLARE @id INT;
-       SET @id = ${id};  -- Remove this line, parameterize the query instead
-
-       ${query}`
-    );
-
-    // Check if a row was affected (if no rows were affected, return 404)
-    if (result.rowsAffected[0] === 0) {
-      return res.status(404).json({ error: "Member not found" });
-    }
-
-    // Respond with a success message
-    res.status(200).json({ message: "Member deleted successfully!" });
-  } catch (err) {
-    console.error("Error deleting member:", err);
-    res.status(500).json({ error: "Database error" });
-  } finally {
-    // Close the database connections
-    sql.close();
-  }
-});
-
 //Register user
-
 app.post("/api/register", async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password } = req.body;
 
@@ -426,7 +388,6 @@ app.post("/api/register", async (req, res) => {
 
 
 //login user
-
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -461,6 +422,7 @@ app.post("/api/login", async (req, res) => {
     sql.close();
   }
 });
+
 
 //receipt type
 app.post("/api/receipt-types", async (req, res) => {
@@ -538,27 +500,131 @@ app.post("/api/receipt-types", async (req, res) => {
 });
 
 
-
 //get receipt type
 app.get("/api/receipt-types", async (req, res) => {
   try {
     // Use the connection pool
     const pool = await poolPromise;
 
-    // Query to get all receipt types
-    const result = await pool.request().query("SELECT name FROM receipt_types");
+    // Query to get all receipt types with their sequence information
+    const query = `
+      SELECT
+        r.id AS receiptTypeId,
+        r.name AS receiptTypeName,
+        s.SequenceText AS sequenceText,
+        s.SequenceNumber AS sequenceNumber
+      FROM receipt_types r
+      LEFT JOIN tblSequence s ON r.id = s.ReceiptTypeID;
+    `;
+    const result = await pool.request().query(query);
 
     // Check if there are results and send as response
     if (result.recordset.length > 0) {
-      res.status(200).json(result.recordset); // Send the array of receipt types
+      res.status(200).json(result.recordset); // Send the array of receipt types and sequences
     } else {
-      res.status(404).json({ message: "No receipt types found" });
+      res.status(404).json({ message: "No receipt types or sequences found" });
     }
   } catch (err) {
     console.error("Database error:", err);
-    res.status(500).json({ error: "Failed to fetch receipt types" });
+    res.status(500).json({ error: "Failed to fetch receipt types and sequences" });
+  } finally {
+    sql.close();
   }
-  finally {
+});
+
+
+
+
+app.put("/api/receipt-types/:id", async (req, res) => {
+  const { id } = req.params; // Get the receipt type ID from the URL
+  const { name, price_type, sequence_txt, sequence_num, prices } = req.body;
+
+  // Validation
+  if (!name || !price_type || !sequence_txt || !sequence_num) {
+    return res.status(400).json({ error: "All fields except prices are required" });
+  }
+
+  if (price_type === 'multiple' && (!prices || prices.length === 0)) {
+    return res.status(400).json({ error: "Prices are required when price_type is 'multiple'" });
+  }
+
+  try {
+    // Use the connection pool
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);  // Use the transaction with the pool
+
+    await transaction.begin();
+
+    // Update the receipt type
+    const receiptTypeQuery = `
+      UPDATE receipt_types
+      SET name = @name, price_type = @price_type
+      WHERE id = @id;
+    `;
+
+    const receiptTypeRequest = new sql.Request(transaction);
+    receiptTypeRequest.input("id", sql.Int, id);
+    receiptTypeRequest.input("name", sql.NVarChar, name);
+    receiptTypeRequest.input("price_type", sql.NVarChar, price_type);
+
+    const result = await receiptTypeRequest.query(receiptTypeQuery);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ error: "Receipt type not found" });
+    }
+
+    // Update the sequence for the receipt type
+    const sequenceQuery = `
+      UPDATE tblSequence
+      SET SequenceText = @sequence_txt, SequenceNumber = @sequence_num
+      WHERE ReceiptTypeID = @id;
+    `;
+
+    const sequenceRequest = new sql.Request(transaction);
+    sequenceRequest.input("sequence_txt", sql.NVarChar, sequence_txt);
+    sequenceRequest.input("sequence_num", sql.Int, sequence_num);
+    sequenceRequest.input("id", sql.Int, id);
+
+    await sequenceRequest.query(sequenceQuery);
+
+    // If price_type is 'multiple', update the prices in tblMultiPrices
+    if (price_type === 'multiple' && Array.isArray(prices) && prices.length > 0) {
+      // Delete existing prices for the receipt type
+      const deletePricesQuery = `
+        DELETE FROM tblMultiPrices
+        WHERE ReceiptTypeID = @id;
+      `;
+      
+      const deletePricesRequest = new sql.Request(transaction);
+      deletePricesRequest.input("id", sql.Int, id);
+
+      await deletePricesRequest.query(deletePricesQuery);
+
+      // Insert new prices
+      const priceQueries = prices.map(price => {
+        const priceQuery = `
+          INSERT INTO tblMultiPrices (ReceiptTypeID, Price)
+          VALUES (@receiptTypeId, @price);
+        `;
+        
+        const priceRequest = new sql.Request(transaction);
+        priceRequest.input("receiptTypeId", sql.Int, id);
+        priceRequest.input("price", sql.Decimal(10, 2), price);
+
+        return priceRequest.query(priceQuery);
+      });
+      // Execute all price queries
+      await Promise.all(priceQueries);
+    }
+
+    // Commit the transaction
+    await transaction.commit();
+
+    res.status(200).json({ message: "Receipt type, sequence, and prices updated successfully!" });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Database error" });
+  } finally {
     sql.close();
   }
 });
@@ -770,7 +836,7 @@ app.get("/api/top-donors", async (req, res) => {
     const pool = await poolPromise;
 
     const result = await pool.request().query(`
-      SELECT TOP 5 name, SUM(amount) AS totalDonated
+      SELECT TOP 4 name, SUM(amount) AS totalDonated
       FROM tblReceipts
       WHERE amount IS NOT NULL
       GROUP BY name

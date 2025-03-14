@@ -34,69 +34,79 @@ const DonationForm = ({ onAddDonation, closeForm }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Donator's Name */}
-      <div>
-        <label className="block font-medium">Donator's Name</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Enter full name"
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
-      </div>
-
-      {/* Phone Number */}
-      <div>
-        <label className="block font-medium">Phone Number</label>
-        <input
-          type="tel"
-          name="phoneNumber"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-          placeholder="Enter phone number"
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
-      </div>
-
-      {/* Donated Amount */}
-      <div>
-        <label className="block font-medium">Donated Amount (LKR)</label>
-        <input
-          type="number"
-          name="amount"
-          value={formData.amount}
-          onChange={handleChange}
-          placeholder="Enter amount"
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
-      </div>
-
-      {/* Reason for Donation */}
-      <div>
-        <label className="block font-medium">Reason for Donation</label>
-        <textarea
-          name="reason"
-          value={formData.reason}
-          onChange={handleChange}
-          placeholder="Enter reason for donation"
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
-      </div>
-
+    <div className="relative bg-white p-6 rounded-lg shadow-lg">
+      {/* Close Button */}
       <button
-        type="submit"
-        className="w-full bg-[#FD9400] text-white py-2 rounded hover:bg-blue-600"
+        onClick={closeForm}
+        className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded"
       >
-        Donate Now
+        X
       </button>
-    </form>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Donator's Name */}
+        <div>
+          <label className="block font-medium">Donator's Name</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Enter full name"
+            className="w-full p-2 border border-gray-300 rounded"
+            required
+          />
+        </div>
+
+        {/* Phone Number */}
+        <div>
+          <label className="block font-medium">Phone Number</label>
+          <input
+            type="tel"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            placeholder="Enter phone number"
+            className="w-full p-2 border border-gray-300 rounded"
+            required
+          />
+        </div>
+
+        {/* Donated Amount */}
+        <div>
+          <label className="block font-medium">Donated Amount (LKR)</label>
+          <input
+            type="number"
+            name="amount"
+            value={formData.amount}
+            onChange={handleChange}
+            placeholder="Enter amount"
+            className="w-full p-2 border border-gray-300 rounded"
+            required
+          />
+        </div>
+
+        {/* Reason for Donation */}
+        <div>
+          <label className="block font-medium">Reason for Donation</label>
+          <textarea
+            name="reason"
+            value={formData.reason}
+            onChange={handleChange}
+            placeholder="Enter reason for donation"
+            className="w-full p-2 border border-gray-300 rounded"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-[#FD9400] text-white py-2 rounded hover:bg-blue-600"
+        >
+          Donate Now
+        </button>
+      </form>
+    </div>
   );
 };
 

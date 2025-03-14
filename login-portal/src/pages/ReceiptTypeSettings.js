@@ -81,7 +81,7 @@ const ReceiptTypeSettings = () => {
   
     // Prepare the data to send to the backend
     const receiptData = {
-      name: newType,
+      receiptTypeName: newType,
       price_type: priceType,
       sequence_txt: `${newSequence.text}-${newSequence.number}`, // Keep the original input (text + numbers)
       sequence_num: extractedNumber, // Use only numbers for sequence_num
@@ -105,7 +105,7 @@ const ReceiptTypeSettings = () => {
         // Update the state with the new receipt type
         setReceiptTypes((prevReceiptTypes) => [
           ...prevReceiptTypes,
-          { name: newType, price_type: priceType, sequence: `${newSequence.text}-${newSequence.number}` },
+          { receiptTypeName: newType, price_type: priceType, sequence: `${newSequence.text}-${newSequence.number}` },
         ]);
   
         // Reset fields
@@ -159,10 +159,10 @@ const ReceiptTypeSettings = () => {
     if (!valid) return;
 
     const updatedTypes = receiptTypes.map((type) =>
-      type.name === currentType.name
+      type.receiptTypeName === currentType.receiptTypeName
         ? {
             ...type,
-            name: newType,
+            receiptTypeName: newType,
             price: priceType === "single" ? prices[0] : prices,
             sequence: `${newSequence.text}-${newSequence.number}`,
           }
@@ -177,27 +177,49 @@ const ReceiptTypeSettings = () => {
   };
 
   const deleteReceiptType = (typeToDelete) => {
-    const updatedTypes = receiptTypes.filter((type) => type.name !== typeToDelete);
+    const updatedTypes = receiptTypes.filter((type) => type.receiptTypeName !== typeToDelete);
     setReceiptTypes(updatedTypes);
   };
 
   const filteredReceiptTypes = receiptTypes.filter((type) =>
-    type.name && type.name.toLowerCase().includes(searchTerm.toLowerCase())
+    type.receiptTypeName && type.receiptTypeName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEdit = (type) => {
     setCurrentType(type);
-    const sequenceParts = type.sequence.split("-");
-    setNewSequence({
-      text: sequenceParts[0],
-      number: sequenceParts[1],
-    });
-    setNewType(type.name);
+  
+    // Ensure sequence is not undefined or null before trying to split it
+    if (type.sequence) {
+      const sequenceParts = type.sequence.split("-");
+      
+      // Check if we have exactly two parts, and ensure that they are valid
+      if (sequenceParts.length === 2) {
+        setNewSequence({
+          text: sequenceParts[0] || "",  // Ensure text part is set
+          number: sequenceParts[1] || "", // Ensure number part is set
+        });
+      } else {
+        // If the sequence doesn't split as expected, set default values or handle the error.
+        setNewSequence({
+          text: "",
+          number: "",
+        });
+      }
+    } else {
+      // If no sequence, set empty values
+      setNewSequence({
+        text: "",
+        number: "",
+      });
+    }
+  
+    setNewType(type.receiptTypeName);
     setPriceType(Array.isArray(type.price) ? "multiple" : "single");
     setPrices(Array.isArray(type.price) ? type.price : [type.price]);
     setEditMode(true);
     setShowModal(true);
   };
+  
 
   const handlePriceChange = (index, value) => {
     const updatedPrices = [...prices];
@@ -242,7 +264,6 @@ const ReceiptTypeSettings = () => {
         <thead>
           <tr>
             <th className="border p-2">Receipt Type</th>
-            <th className="border p-2">Price Type</th>
             <th className="border p-2">Actions</th>
           </tr>
         </thead>
@@ -254,10 +275,7 @@ const ReceiptTypeSettings = () => {
           ) : (
             filteredReceiptTypes.map((type, index) => (
               <tr key={index}>
-                <td className="border p-2">{type.name}</td>
-                <td className="border p-2">
-                  {Array.isArray(type.price) ? type.price.join(", ") : type.price}
-                </td>
+                <td className="border p-2">{type.receiptTypeName}</td>
                 <td className="border p-2">
                   <button
                     onClick={() => handleEdit(type)}
@@ -266,7 +284,7 @@ const ReceiptTypeSettings = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => deleteReceiptType(type.name)}
+                    onClick={() => deleteReceiptType(type.receiptTypeName)}
                     className="bg-red-500 text-white px-2 py-1 rounded"
                   >
                     Delete

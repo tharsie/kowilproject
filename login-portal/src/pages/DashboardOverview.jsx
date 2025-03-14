@@ -4,20 +4,28 @@ import Rect11 from "../assets/Rectangle11.png";
 import Rect12 from "../assets/Rectangle12.png";
 import Rect13 from "../assets/Rectangle13.png";
 import Rect17 from "../assets/Rectangle17.png";
-import cart from "../assets/cart.svg"
 import arrow from "../assets/right 1.png"
 import premiumpng from "../assets/premium-quality 1.png"
 import { useNavigate } from "react-router-dom"; 
+import ReceiptForm from "../components/ReceiptForm";
 
 const DashboardOverview = () => {
 
   const navigate = useNavigate();
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [eventName, setEventName] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [organizer, setOrganizer] = useState("");
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [topDonors, setTopDonors] = useState([]);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receipts, setReceipts] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  const handlePrintClick = () => {
+    setShowReceipt(true);  // Open the ReceiptForm when the button is clicked
+  };
+
+  const handleClosePopup = () => {
+    setShowReceipt(false);  // Close the modal
+  };
 
   useEffect(() => {
     const fetchTopDonors = async () => {
@@ -54,8 +62,42 @@ const DashboardOverview = () => {
   
 
   const handleRedirect = () => {  
-    navigate("/dashboard/receipt"); // Replace with your target route
+    navigate("/dashboard/receipt"); 
   };
+
+  const handleRedirect2 = () => {  
+    navigate("/dashboard/donations"); 
+  };
+
+  const handleRedirect3 = () => {  
+    navigate("/dashboard/settings/event-details");
+  };
+
+  const handleFormSubmit = (receiptData) => {
+    fetch("http://localhost:3000/api/receipts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(receiptData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to generate receipt");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        alert(`Receipt generated successfully!`);
+        setReceipts((prevReceipts) => [...prevReceipts, receiptData]); // Add new receipt to the table
+        setIsFormVisible(false); // Hide the form after submitting
+        setShowReceipt(false);
+      })
+      .catch((error) => {
+        alert(`Error: ${error.message}`);
+      });
+  };
+
 
   return (
     <div className="relative">
@@ -68,6 +110,22 @@ const DashboardOverview = () => {
           </h1>
         </div>
       </nav>
+
+      {/* Modal / Popup */}
+      {showReceipt && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-[25%] max-w-4xl relative">
+              <button 
+                onClick={handleClosePopup} 
+                className="absolute top-2 right-2 text-gray-700 text-xl"
+              >
+                &times;
+              </button>
+              <ReceiptForm onSubmit={handleFormSubmit} />
+            </div>
+          </div>
+        )}
+
 
       {/* Content Section */}
       <div className="bg-white p-3 mt-[80px] -ml-[29px] space-y-5">
@@ -86,7 +144,7 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]">
+            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
               Print
             </button>
             </div>
@@ -104,7 +162,7 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]">
+            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
               Print
             </button>
             </div>
@@ -122,7 +180,7 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]">
+            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
               Print
             </button>
             </div>
@@ -139,7 +197,7 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]">
+            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
               Print
             </button>
             </div>
@@ -151,7 +209,6 @@ const DashboardOverview = () => {
                 <h1 className="mt-2 text-lg font-semibold">See more</h1>
               </div>
             </div>
-
         {/* Bottom Section */}
         <div className="flex flex-col lg:flex-row justify-between gap-4">
           {/* Top Donators */}
@@ -162,7 +219,7 @@ const DashboardOverview = () => {
                 {topDonors.length > 0 && (
                   <div className="bg-white mt-5 w-[80%] pl-9 rounded-full h-1/6 flex justify-between pt-2">
                     <img src={premiumpng} alt="Top Donor" className="w-8 -ml-7 h-8" />
-                    <p className="text-black relative font-bold -ml-[35%] z-10">{topDonors[0].name}</p>
+                    <p className="text-black relative font-bold -ml-[65%] z-10">{topDonors[0].name}</p>
                     <p className="text-black relative font-semibold mr-6 z-10">LKR {topDonors[0].totalDonated}</p>
                   </div>
                 )}
@@ -173,6 +230,7 @@ const DashboardOverview = () => {
                   </div>
                 ))}
                 <div className="flex justify-between w-3/4 font-semibold">
+                <h1 className="mt-2 text-lg text-[#FD9400] cursor-pointer font-semibold" onClick={handleRedirect2}>See more . . .</h1>
                 </div>
               </div>
             </div>
@@ -187,19 +245,23 @@ const DashboardOverview = () => {
             <div className="absolute inset-0 bg-black opacity-60 rounded-xl"></div>
 
             {/* Title */}
-            <h1 className="text-xl font-bold text-white relative z-10">Upcoming Events</h1>
+            <h1 className="text-xl font-bold ml-4 mt-2 text-white relative z-10">Upcoming Events</h1>
 
             {/* Fetch and Display Upcoming Events */}
             {upcomingEvents.length > 0 ? (
               upcomingEvents.slice(0, 6).map((event, index) => (
-                <p key={event.id} className="text-white pt-2 font-semibold relative z-10">
+                <p key={event.id} className="text-white ml-4  pt-2 font-semibold relative z-10">
                   {index + 1}. {event.name} - {new Date(event.date).toLocaleDateString()}
                 </p>
               ))
             ) : (
               <p className="text-white pt-2 font-semibold relative z-10">No upcoming events.</p>
             )}
+            <div className="flex justify-between w-3/4 font-semibold">
+                <h1 className="mt-2 text-lg text-[#FD9400] ml-4 cursor-pointer z-10 font-semibold" onClick={handleRedirect3}>See more . . .</h1>
+                </div>
           </div>
+          
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@ const EventDetails = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setEvents([...events, data.event]); // Update state with new event
+        setEvents([...events, data.event]);
         resetForm();
       } else {
         console.error("Failed to add event");
@@ -206,7 +206,15 @@ const EventDetails = () => {
       {/* Modal for Adding or Editing Event */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 relative">
+            {/* Close Button */}
+            <button
+              className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded"
+              onClick={resetForm}
+            >
+              X
+            </button>
+
             <h3 className="text-lg font-semibold mb-4">
               {editMode ? "Edit Event" : "Add New Event"}
             </h3>

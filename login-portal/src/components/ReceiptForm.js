@@ -11,7 +11,7 @@ const ReceiptForm = ({ onSubmit }) => {
   const [secondDropdownValue, setSecondDropdownValue] = useState("");
   const [selectedRadio, setSelectedRadio] = useState("");
   const [receiptTypes, setReceiptTypes] = useState([]);
-  const [receiptType, setReceiptType] = useState("");
+  const [receiptTypeName, setReceiptType] = useState("");
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -23,9 +23,12 @@ const ReceiptForm = ({ onSubmit }) => {
     const fetchReceiptTypes = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/receipt-types");
+        console.log("Response status:", response.status);
+  
         if (response.ok) {
           const data = await response.json();
-          setReceiptTypes(data); // Assuming data is an array of receipt types
+          console.log("Fetched receipt types:", data); // Log the fetched data
+          setReceiptTypes(data); // Assuming data is an array
         } else {
           console.error("Failed to fetch receipt types");
         }
@@ -33,9 +36,10 @@ const ReceiptForm = ({ onSubmit }) => {
         console.error("Error fetching receipt types:", error);
       }
     };
-
+  
     fetchReceiptTypes();
   }, []);
+  
 
   const handleAmountChange = (e) => {
     const value = e.target.value;
@@ -61,7 +65,7 @@ const ReceiptForm = ({ onSubmit }) => {
     doc.text(`Amount: ${amount}`, 20, 40);
     doc.text(`Amount in Words: ${amountInWords}`, 20, 50);
     doc.text(`Date: ${date}`, 20, 60);
-    doc.text(`Receipt Type: ${receiptType}`, 20, 70);
+    doc.text(`Receipt Type: ${receiptTypeName}`, 20, 70);
     doc.text(`Dropdown Value: ${dropdownValue}`, 20, 80);
     doc.text(`Second Dropdown Value: ${secondDropdownValue}`, 20, 90);
     doc.text(`Selected Radio Option: ${selectedRadio}`, 20, 100);
@@ -78,7 +82,7 @@ const ReceiptForm = ({ onSubmit }) => {
       amount,
       amountInWords,
       date,
-      receiptType,
+      receiptTypeName,
       dropdownValue,
       secondDropdownValue,
       selectedRadio,
@@ -92,7 +96,7 @@ const ReceiptForm = ({ onSubmit }) => {
     }
 
     // Amount validation only for receiptType other than 'அர்ச்சனை'
-    if (receiptType !== "அர்ச்சனை" && (amount === "" || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
+    if (receiptTypeName !== "அர்ச்சனை" && (amount === "" || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
       newErrors.amount = "Please enter a valid amount in numbers.";
     }
 
@@ -117,7 +121,7 @@ const ReceiptForm = ({ onSubmit }) => {
         </label>
         <select
           id="receiptType"
-          value={receiptType}
+          value={receiptTypeName}
           onChange={(e) => setReceiptType(e.target.value)}
           className="border p-2 rounded w-full"
         >
@@ -125,12 +129,12 @@ const ReceiptForm = ({ onSubmit }) => {
             Select Receipt Type
           </option>
           {receiptTypes.map((type, index) => (
-            <option key={index} value={type.name}>
-              {type.name}
+            <option key={index} value={type.receiptTypeName}>
+              {type.receiptTypeName}
             </option>
           ))}
         </select>
-        {errors.receiptType && <p className="text-red-500 text-sm">{errors.receiptType}</p>}
+        {errors.receiptTypeName && <p className="text-red-500 text-sm">{errors.receiptTypeName}</p>}
       </div>
 
       {/* Recipient's Name */}
@@ -148,7 +152,7 @@ const ReceiptForm = ({ onSubmit }) => {
       </div>
 
       {/* Amount Field - Hidden for "அர்ச்சனை" */}
-      {receiptType !== "அர்ச்சனை" && (
+      {receiptTypeName !== "அர்ச்சனை" && (
         <div>
           <label htmlFor="amount" className="block text-lg font-medium">Receipt Amount (Numbers)</label>
           <input
@@ -166,7 +170,7 @@ const ReceiptForm = ({ onSubmit }) => {
       )}
 
       {/* Amount in Words (Auto-Generated) */}
-      {receiptType !== "அர்ச்சனை" && (
+      {receiptTypeName !== "அர்ச்சனை" && (
         <div>
           <label htmlFor="amountInWords" className="block text-lg font-medium">Receipt Amount (In Words)</label>
           <input
@@ -180,7 +184,7 @@ const ReceiptForm = ({ onSubmit }) => {
       )}
 
       {/* Radio Buttons for "அர்ச்சனை" */}
-      {receiptType === "அர்ச்சனை" && (
+      {receiptTypeName === "அர்ச்சனை" && (
         <div>
           <label className="block text-lg font-medium">Select amount of அர்ச்சனை</label>
           <div className="flex space-x-4">
@@ -214,7 +218,7 @@ const ReceiptForm = ({ onSubmit }) => {
       </div>
 
       {/* First Dropdown Before Submit - Show only for "அர்ச்சனை" */}
-      {receiptType === "அர்ச்சனை" && (
+      {receiptTypeName === "அர்ச்சனை" && (
         <div>
           <label htmlFor="dropdown" className="block text-lg font-medium">Select Option</label>
           <select
@@ -235,7 +239,7 @@ const ReceiptForm = ({ onSubmit }) => {
       )}
 
       {/* Second Dropdown Before Submit - Show only for "அர்ச்சனை" */}
-      {receiptType === "அர்ச்சனை" && (
+      {receiptTypeName === "அர்ச்சனை" && (
         <div>
           <label htmlFor="secondDropdown" className="block text-lg font-medium">Select Another Option</label>
           <select
