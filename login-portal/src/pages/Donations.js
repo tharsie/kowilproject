@@ -54,14 +54,6 @@ const Donations = () => {
                     className="w-full p-3 bg-gray-100 rounded-3xl text-black mt-6 border pl-7 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-      
-                {/* Cart Icon */}
-                <div className="relative ml-4 -lg:ml-4 mt-5">
-                  <img src={cart} alt="Cart" className="w-10 h-10" />
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
-                    3 {/* Dynamic count */}
-                  </span>
-                </div>
               </div>
       
               {/* Search Bar for Mobile */}

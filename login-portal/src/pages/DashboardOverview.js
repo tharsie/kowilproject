@@ -1,9 +1,11 @@
 import React from "react";
 import { useState,useEffect } from "react";
 import Rect11 from "../assets/Rectangle11.png";
-import Rect12 from "../assets/Rectangle12.png";
-import Rect13 from "../assets/Rectangle13.png";
+import Rect15 from "../assets/red-thread.png";
+import Rect12 from "../assets/Pongal.png";
+import Rect13 from "../assets/Petti-Kappu.jpeg";
 import Rect17 from "../assets/Rectangle17.png";
+import Rect18 from "../assets/Rectangle13.png";
 import arrow from "../assets/right 1.png"
 import premiumpng from "../assets/premium-quality 1.png"
 import { useNavigate } from "react-router-dom"; 
@@ -128,15 +130,14 @@ const DashboardOverview = () => {
 
 
       {/* Content Section */}
-      <div className="bg-white p-3 mt-[80px] -ml-[29px] space-y-5">
-        {/* Overview Grid */}
-        <div className="flex flex-col lg:flex-row justify-between ">
-          {/* Cards */}
-          <div className="p-2 rounded-lg border-2  h-[259px] w-[237px] flex flex-col">
-            <img src={Rect11} alt="Rectangle" className="w-full h-30 mb-2" />
-            <h3 className="text-lg font-semibold">பழ அர்ச்சனை</h3>
-            <p className="text-base">LKR 40.00</p>
-            <div className="flex mt-[28px]">
+      <div className="bg-white p-2 mt-[80px] -ml-[29px] space-y-3">
+      <div className="flex overflow-x-auto space-x-4 p-2">
+        {/* Cards */}
+        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+          <img src={Rect11} alt="Rectangle" className="w-full h-30 mb-2" />
+          <h3 className="text-lg font-semibold">பழ அர்ச்சனை</h3>
+          <p className="text-base">LKR 40.00</p>
+          <div className="flex mt-[28px]">
             <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">+</h1>
             </div>
@@ -144,17 +145,17 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
+            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
               Print
             </button>
-            </div>
           </div>
+        </div>
 
-          <div className="p-2 rounded-lg border-2  h-[259px] w-[237px] flex flex-col">
-            <img src={Rect12} alt="Rectangle" className="w-full h-30 mb-2" />
-            <h3 className="text-lg font-semibold">காழஞ்சி அர்ச்சனை</h3>
-            <p className="text-base">LKR 40.00</p>
-            <div className="flex mt-[28px]">
+        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+          <img src={Rect12} alt="Rectangle" className="w-full h-30 mb-2" />
+          <h3 className="text-lg font-semibold">பொங்கல்</h3>
+          <p className="text-base">LKR 500.00</p>
+          <div className="flex mt-[28px]">
             <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">+</h1>
             </div>
@@ -162,17 +163,17 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
+            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
               Print
             </button>
-            </div>
           </div>
+        </div>
 
-          <div className="p-2 rounded-lg border-2  h-[259px] w-[237px] flex flex-col">
-            <img src={Rect13} alt="Rectangle" className="w-full h-30 mb-2" />
-            <h3 className="text-lg font-semibold">நெய் விளக்கு</h3>
-            <p className="text-base">LKR 40.00</p>
-            <div className="flex mt-[28px]">
+        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+          <img src={Rect18} alt="Rectangle" className="w-full h-30 mb-2" />
+          <h3 className="text-lg font-semibold">நெய் விளக்கு</h3>
+          <p className="text-base">LKR 40.00</p>
+          <div className="flex mt-[28px]">
             <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">+</h1>
             </div>
@@ -180,16 +181,17 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
+            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
               Print
             </button>
-            </div>
           </div>
-          <div className="p-2 rounded-lg border-2  h-[259px] w-[237px] flex flex-col">
-            <img src={Rect13} alt="Rectangle" className="w-full h-30 mb-2" />
-            <h3 className="text-lg font-semibold">நெய் விளக்கு</h3>
-            <p className="text-base">LKR 40.00</p>
-            <div className="flex mt-[28px]">
+        </div>
+
+        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+          <img src={Rect13} alt="Rectangle" className="w-full h-30 mb-2" />
+          <h3 className="text-lg font-semibold">காப்பு</h3>
+          <p className="text-base">LKR 1000.00</p>
+          <div className="flex mt-[28px]">
             <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">+</h1>
             </div>
@@ -197,18 +199,33 @@ const DashboardOverview = () => {
             <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
               <h1 className="text-xl">-</h1>
             </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px]  ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"onClick={handlePrintClick}>
+            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
               Print
             </button>
-            </div>
           </div>
-            <div className="rounded-lg w-[130px] bg-[#FD94000D] flex flex-col justify-center items-center p-2 cursor-pointer hover:text-white hover:bg-[#FD9400]"onClick={handleRedirect}>
-              <div className="w-[50px] h-[50px] rounded-full bg-white flex justify-center items-center">
-                <img src={arrow} alt="Rectangle" className="w-full" />
-              </div>
-                <h1 className="mt-2 text-lg font-semibold">See more</h1>
-              </div>
+        </div>
+
+        {/* Duplicate Card */}
+        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+          <img src={Rect15} alt="Rectangle" className="w-full h-30 mb-2" />
+          <h3 className="text-lg font-semibold">காப்பு</h3>
+          <p className="text-base">LKR 500.00</p>
+          <div className="flex mt-[28px]">
+            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
+              <h1 className="text-xl">+</h1>
             </div>
+            <h1 className="mt-2">1</h1>
+            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
+              <h1 className="text-xl">-</h1>
+            </div>
+            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
+              Print
+            </button>
+          </div>
+        </div>
+
+      </div>
+
         {/* Bottom Section */}
         <div className="flex flex-col lg:flex-row justify-between gap-4">
           {/* Top Donators */}
