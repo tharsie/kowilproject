@@ -1,41 +1,27 @@
-import React from "react";
-import { useState,useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Rect11 from "../assets/Rectangle11.png";
 import Rect15 from "../assets/red-thread.png";
 import Rect12 from "../assets/Pongal.png";
 import Rect13 from "../assets/Petti-Kappu.jpeg";
 import Rect17 from "../assets/Rectangle17.png";
 import Rect18 from "../assets/Rectangle13.png";
-import arrow from "../assets/right 1.png"
-import premiumpng from "../assets/premium-quality 1.png"
-import { useNavigate } from "react-router-dom"; 
-import ReceiptForm from "../components/ReceiptForm";
+import { useNavigate } from "react-router-dom";
+import { jsPDF } from "jspdf";
+import premiumpng from "../assets/premium-quality 1.png";
 
 const DashboardOverview = () => {
-
   const navigate = useNavigate();
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [topDonors, setTopDonors] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [receipts, setReceipts] = useState([]);
-  const [isFormVisible, setIsFormVisible] = useState(false);
-
-  const handlePrintClick = () => {
-    setShowReceipt(true);  // Open the ReceiptForm when the button is clicked
-  };
-
-  const handleClosePopup = () => {
-    setShowReceipt(false);  // Close the modal
-  };
+  const [selectedItem, setSelectedItem] = useState(null);
+  const receiptRef = useRef(); // Reference for printing
 
   useEffect(() => {
     const fetchTopDonors = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/top-donors");
-        if (!response.ok) {
-          throw new Error("Failed to fetch top donors");
-        }
+        if (!response.ok) throw new Error("Failed to fetch top donors");
         const data = await response.json();
         setTopDonors(data);
       } catch (error) {
@@ -57,14 +43,43 @@ const DashboardOverview = () => {
         console.error("Error fetching upcoming events:", error);
       }
     };
-  
+
     fetchUpcomingEvents();
   }, []);
 
+   const handleGeneratePDF = () => {
+      if (!selectedItem.userName || !selectedItem.date) {
+        alert("Please enter your name before generating the receipt.");
+        return;
+      }
   
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text("Donation Receipt", 80, 20);
+  
+      doc.setFontSize(12);
+      doc.text(`Issued to: ${selectedItem.userName}`, 20, 40);
+      doc.text(`Date: ${selectedItem.date}`, 20, 50);
+      doc.text(`Receipt Type: ${selectedItem.receiptType}`, 20, 60);
+      doc.text(`Amount: LKR ${selectedItem.price}.00`, 20, 70);
+  
+      // Save as PDF
+      doc.save("receipt.pdf");
+  
+      setShowReceipt(false);
+    };
 
-  const handleRedirect = () => {  
-    navigate("/dashboard/receipt"); 
+  const handlePrintClick = (item) => {
+    setSelectedItem({
+      ...item,
+      userName: "", // Ensure userName input starts empty
+      date: new Date().toISOString().split("T")[0], // Auto-fill today's date
+      receiptType: item.name, // Auto-set receiptType from item name
+    });
+    setShowReceipt(true);
   };
 
   const handleRedirect2 = () => {  
@@ -75,161 +90,133 @@ const DashboardOverview = () => {
     navigate("/dashboard/settings/event-details");
   };
 
-  const handleFormSubmit = (receiptData) => {
+  const handleClosePopup = () => {
+    setShowReceipt(false);
+    setSelectedItem(null);
+  };
+
+  const handleFormSubmit = () => {
+    if (!selectedItem.userName || !selectedItem.date || !selectedItem.receiptType) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
     fetch("http://localhost:3000/api/receipts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(receiptData),
+      body: JSON.stringify({
+        name: selectedItem.userName,
+        amount: selectedItem.price,
+        date: selectedItem.date,
+        receiptType: selectedItem.receiptType,
+      }),
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to generate receipt");
-        }
+        if (!response.ok) throw new Error("Failed to generate receipt");
         return response.json();
       })
       .then((data) => {
-        alert(`Receipt generated successfully!`);
-        setReceipts((prevReceipts) => [...prevReceipts, receiptData]); // Add new receipt to the table
-        setIsFormVisible(false); // Hide the form after submitting
-        setShowReceipt(false);
+        alert(`Receipt Generated! ID: ${data.receiptId}`);
+        handleGeneratePDF(); // Print receipt after generation
       })
       .catch((error) => {
         alert(`Error: ${error.message}`);
       });
   };
 
+  const handlePrintReceipt = () => {
+    window.print();
+  };
+
+  const items = [
+    { id: 1, name: "பழ அர்ச்சனை", price: 40, image: Rect11 },
+    { id: 2, name: "பொங்கல்", price: 500, image: Rect12 },
+    { id: 3, name: "நெய் விளக்கு", price: 40, image: Rect18 },
+    { id: 4, name: "காப்பு", price: 1000, image: Rect13 },
+    { id: 5, name: "காப்பு", price: 500, image: Rect15 },
+  ];
 
   return (
     <div className="relative">
-      {/* Navbar */}
-      <nav className="text-white bg-white  fixed w-full p-6 border-b-2 top-3 left-0 border-gray-300 -mt-7 z-16">
-        <div className="flex items-center  justify-between">
-          {/* Logo */}
+      <nav className="text-white bg-white fixed w-full p-6 border-b-2 top-3 left-0 border-gray-300 -mt-7 z-16">
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl lg:text-3xl font-bold mt-6 ml-4 lg:ml-[244px] text-black">
             Dashboard
           </h1>
         </div>
       </nav>
 
-      {/* Modal / Popup */}
-      {showReceipt && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-[25%] max-w-4xl relative">
-              <button 
-                onClick={handleClosePopup} 
-                className="absolute top-2 right-2 text-gray-700 text-xl"
+      {/* Receipt Modal */}
+      {showReceipt && selectedItem && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[25%] max-w-4xl relative">
+            <button onClick={handleClosePopup} className="absolute top-2 right-2 text-gray-700 text-xl">
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-2">Receipt Form</h2>
+
+            {/* User Name Input */}
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg mb-3"
+              placeholder="Enter your name"
+              value={selectedItem.userName}
+              onChange={(e) => setSelectedItem((prev) => ({ ...prev, userName: e.target.value }))}
+            />
+
+            {/* Date Input */}
+            <label className="block text-sm font-medium text-gray-700">Date</label>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border rounded-lg mb-3"
+              value={selectedItem.date}
+              onChange={(e) => setSelectedItem((prev) => ({ ...prev, date: e.target.value }))}
+            />
+
+            {/* Receipt Preview */}
+            <div className="p-4 border-2 rounded-lg bg-gray-100 text-center">
+              <h3 className="text-lg font-semibold">{selectedItem.receiptType}</h3>
+              <p className="text-base">LKR {selectedItem.price}.00</p>
+              <p className="text-sm">Issued to: {selectedItem.userName}</p>
+              <p className="text-sm">Date: {selectedItem.date}</p>
+            </div>
+
+            {/* Generate PDF Button */}
+            <button
+              onClick={handleFormSubmit}
+              className="border-2 rounded-3xl px-4 h-[35px] text-white w-full bg-[#FD9400] hover:bg-[#FD8000] mt-3"
+            >
+              Generate PDF
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Product Cards */}
+      <div className="bg-white p-2 mt-[80px] -ml-[41px] space-y-3">
+        <div className="flex overflow-x-auto space-x-3.5 p-2">
+          {items.map((item) => (
+            <div key={item.id} className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
+              <img src={item.image} alt={item.name} className="w-full h-30 mb-2" />
+              <h3 className="text-lg font-semibold">{item.name}</h3>
+              <p className="text-base">LKR {item.price}.00</p>
+              <button
+                className="border-2 rounded-3xl px-4 h-[35px] mt-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"
+                onClick={() => handlePrintClick(item)}
               >
-                &times;
+                Print
               </button>
-              <ReceiptForm onSubmit={handleFormSubmit} />
             </div>
-          </div>
-        )}
-
-
-      {/* Content Section */}
-      <div className="bg-white p-2 mt-[80px] -ml-[29px] space-y-3">
-      <div className="flex overflow-x-auto space-x-4 p-2">
-        {/* Cards */}
-        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-          <img src={Rect11} alt="Rectangle" className="w-full h-30 mb-2" />
-          <h3 className="text-lg font-semibold">பழ அர்ச்சனை</h3>
-          <p className="text-base">LKR 40.00</p>
-          <div className="flex mt-[28px]">
-            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">+</h1>
-            </div>
-            <h1 className="mt-2">1</h1>
-            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">-</h1>
-            </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
-              Print
-            </button>
-          </div>
+          ))}
         </div>
-
-        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-          <img src={Rect12} alt="Rectangle" className="w-full h-30 mb-2" />
-          <h3 className="text-lg font-semibold">பொங்கல்</h3>
-          <p className="text-base">LKR 500.00</p>
-          <div className="flex mt-[28px]">
-            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">+</h1>
-            </div>
-            <h1 className="mt-2">1</h1>
-            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">-</h1>
-            </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
-              Print
-            </button>
-          </div>
-        </div>
-
-        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-          <img src={Rect18} alt="Rectangle" className="w-full h-30 mb-2" />
-          <h3 className="text-lg font-semibold">நெய் விளக்கு</h3>
-          <p className="text-base">LKR 40.00</p>
-          <div className="flex mt-[28px]">
-            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">+</h1>
-            </div>
-            <h1 className="mt-2">1</h1>
-            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">-</h1>
-            </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
-              Print
-            </button>
-          </div>
-        </div>
-
-        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-          <img src={Rect13} alt="Rectangle" className="w-full h-30 mb-2" />
-          <h3 className="text-lg font-semibold">காப்பு</h3>
-          <p className="text-base">LKR 1000.00</p>
-          <div className="flex mt-[28px]">
-            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">+</h1>
-            </div>
-            <h1 className="mt-2">1</h1>
-            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">-</h1>
-            </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
-              Print
-            </button>
-          </div>
-        </div>
-
-        {/* Duplicate Card */}
-        <div className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-          <img src={Rect15} alt="Rectangle" className="w-full h-30 mb-2" />
-          <h3 className="text-lg font-semibold">காப்பு</h3>
-          <p className="text-base">LKR 500.00</p>
-          <div className="flex mt-[28px]">
-            <div className="border-2 p-2 rounded-full flex items-center justify-center mr-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">+</h1>
-            </div>
-            <h1 className="mt-2">1</h1>
-            <div className="border-2 p-2 rounded-full flex items-center justify-center ml-2 pb-3 mt-2 w-[26px] h-[26px] border-[#D9D9D9]">
-              <h1 className="text-xl">-</h1>
-            </div>
-            <button className="border-2 rounded-3xl px-4 h-[35px] ml-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]" onClick={handlePrintClick}>
-              Print
-            </button>
-          </div>
-        </div>
-
       </div>
-
-        {/* Bottom Section */}
-        <div className="flex flex-col lg:flex-row justify-between gap-4">
-          {/* Top Donators */}
-          <div className="p-4 w-[60%] h-[302px] bg-[#FD94000D] rounded-xl">
+      {/* Top Donators and Events Section */}
+      <div className="flex flex-col lg:flex-row justify-between gap-4">
+        <div className="p-4 w-[60%] h-[302px] bg-[#FD94000D] rounded-xl">
             <div className="ml-[2%]">
               <h1 className="text-2xl font-bold">Top Donators</h1>
               <div className="ml-[3%]">
@@ -253,8 +240,7 @@ const DashboardOverview = () => {
             </div>
           </div>
 
-          {/* Upcoming Events */}
-          <div
+        <div
             className="border-2 p-4 w-[35%] h-[302px] rounded-xl relative bg-cover bg-center"
             style={{ backgroundImage: `url(${Rect17})` }}
           >
@@ -278,8 +264,6 @@ const DashboardOverview = () => {
                 <h1 className="mt-2 text-lg text-[#FD9400] ml-4 cursor-pointer z-10 font-semibold" onClick={handleRedirect3}>See more . . .</h1>
                 </div>
           </div>
-          
-        </div>
       </div>
     </div>
   );
