@@ -197,7 +197,7 @@ const DashboardOverview = () => {
 
 
       {/* Product Cards */}
-      <div className="bg-white p-2 mt-[80px] -ml-[41px] space-y-3">
+      <div className="bg-white p-0 mt-[80px] -ml-[41px] space-y-3">
         <div className="flex overflow-x-auto space-x-3.5 p-2">
           {items.map((item) => (
             <div key={item.id} className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
@@ -213,6 +213,7 @@ const DashboardOverview = () => {
             </div>
           ))}
         </div>
+        <h1 className="-mt-0 text-lg text-[#FD9400] ml-[0] flex justify-end cursor-pointer z-10 font-semibold" onClick={handleRedirect3}>See more . . .</h1>
       </div>
       {/* Top Donators and Events Section */}
       <div className="flex flex-col lg:flex-row justify-between gap-4">

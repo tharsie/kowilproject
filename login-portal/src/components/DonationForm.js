@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const DonationForm = ({ onAddDonation, closeForm }) => {
+const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) => {
   const [formData, setFormData] = useState({
     name: '',
     phoneNumber: '',
     reason: '',
     amount: '',
   });
+
+  // If the form is in edit mode, populate the fields with the existing donation data
+  useEffect(() => {
+    if (donation) {
+      setFormData({
+        name: donation.name,
+        phoneNumber: donation.phoneNumber,
+        reason: donation.reason,
+        amount: donation.amount,
+      });
+    }
+  }, [donation]);
 
   const handleChange = (e) => {
     setFormData({
@@ -18,31 +30,39 @@ const DonationForm = ({ onAddDonation, closeForm }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
-      // Sending form data to backend API
-      const response = await axios.post('http://localhost:3000/api/donations', formData);
-      if (response.status === 201) {
-        alert('Donation added successfully!');
-        onAddDonation(response.data.donation); // Update the donations list in the parent component
-        closeForm(); // Close the form after successful submission
+      let response;
+      // If we are editing, send a PUT request
+      if (donation) {
+        response = await axios.put(
+          `http://localhost:3000/api/donations/${donation.id}`,
+          formData
+        );
+        if (response.status === 200) {
+          alert('Donation updated successfully!');
+          onUpdateDonation(response.data.donation); // Update the donations list in the parent component
+        }
+      } else {
+        // If adding a new donation, send a POST request
+        response = await axios.post('http://localhost:3000/api/donations', formData);
+        if (response.status === 201) {
+          alert('Donation added successfully!');
+          onAddDonation(response.data.donation); // Update the donations list in the parent component
+        }
       }
+
+      closeForm(); // Close the form after successful submission
     } catch (error) {
       console.error('Error submitting donation:', error);
-      alert('Failed to add donation. Please try again later.');
+      alert('Failed to save donation. Please try again later.');
     }
   };
 
   return (
     <div className="relative bg-white p-6 rounded-lg shadow-lg">
       {/* Close Button */}
-      <button
-        onClick={closeForm}
-        className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded"
-      >
-        X
-      </button>
-
+      
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Donator's Name */}
         <div>
@@ -103,7 +123,7 @@ const DonationForm = ({ onAddDonation, closeForm }) => {
           type="submit"
           className="w-full bg-[#FD9400] text-white py-2 rounded hover:bg-blue-600"
         >
-          Donate Now
+          {donation ? 'Update Donation' : 'Donate Now'}
         </button>
       </form>
     </div>

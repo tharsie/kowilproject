@@ -426,10 +426,11 @@ app.post("/api/login", async (req, res) => {
 
 //receipt type
 app.post("/api/receipt-types", async (req, res) => {
-  const { name, price_type, sequence_txt, sequence_num, prices } = req.body;
+  const { newType, price_type, sequence_txt, sequence_num, prices } = req.body;
 
-  if (!name || !price_type || !sequence_txt || !sequence_num) {
-    return res.status(400).json({ error: "All fields except prices are required" });
+  // Validation for newType
+  if (!newType || newType.trim() === "") {
+    return res.status(400).json({ error: "The 'name' field cannot be empty." });
   }
 
   if (price_type === 'multiple' && (!prices || prices.length === 0)) {
@@ -447,11 +448,11 @@ app.post("/api/receipt-types", async (req, res) => {
     const receiptTypeQuery = `
       INSERT INTO receipt_types (name, price_type)
       OUTPUT INSERTED.id AS receiptTypeId
-      VALUES (@name, @price_type);
+      VALUES (@newType, @price_type);
     `;
 
     const receiptTypeRequest = new sql.Request(transaction);
-    receiptTypeRequest.input("name", sql.NVarChar, name);
+    receiptTypeRequest.input("newType", sql.NVarChar, newType);  // Correct input name
     receiptTypeRequest.input("price_type", sql.NVarChar, price_type);
 
     const receiptTypeResult = await receiptTypeRequest.query(receiptTypeQuery);
@@ -487,6 +488,7 @@ app.post("/api/receipt-types", async (req, res) => {
       // Execute all price queries
       await Promise.all(priceQueries);
     }
+
     // Commit the transaction
     await transaction.commit();
 
@@ -498,6 +500,8 @@ app.post("/api/receipt-types", async (req, res) => {
     sql.close();
   }
 });
+
+
 
 
 //get receipt type
@@ -630,6 +634,8 @@ app.put("/api/receipt-types/:id", async (req, res) => {
 });
 
 
+//receipt post
+
 app.post("/api/receipts", async (req, res) => {
   const {
     name,
@@ -697,6 +703,8 @@ app.post("/api/receipts", async (req, res) => {
   }
 });
 
+
+
 //receipt get
 app.get("/api/receipts", async (req, res) => {
   try {
@@ -708,6 +716,124 @@ app.get("/api/receipts", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch receipts", details: error.message });
   }
 });
+
+app.put("/api/receipts/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    name,
+    amount,
+    amountInWords,
+    date,
+    receiptType,
+    dropdownValue,
+    secondDropdownValue,
+    selectedRadio,
+  } = req.body;
+
+  // Validate required fields
+  if (!name || (!amount && receiptType !== "அர்ச்சனை") || !date || !receiptType) {
+    return res.status(400).json({ error: "Name, Date, and Receipt Type are required. Amount is required unless Receipt Type is 'அர்ச்சனை'." });
+  }
+
+  try {
+    // Use the connection pool
+    const pool = await poolPromise;
+
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      // Update the receipt in tblReceipts
+      const updateResult = await transaction.request()
+        .input("Id", sql.Int, id)
+        .input("Name", sql.NVarChar(255), name)
+        .input("Amount", sql.Decimal(10, 2), amount || null)
+        .input("AmountInWords", sql.NVarChar(500), amountInWords || null)
+        .input("Date", sql.Date, date)
+        .input("ReceiptType", sql.NVarChar(255), receiptType)
+        .input("DropdownValue", sql.NVarChar(255), dropdownValue || null)
+        .input("SecondDropdownValue", sql.NVarChar(255), secondDropdownValue || null)
+        .input("SelectedRadio", sql.NVarChar(255), selectedRadio || null)
+        .query(`
+          UPDATE tblReceipts
+          SET name = @Name,
+              amount = @Amount,
+              amountInWords = @AmountInWords,
+              date = @Date,
+              receiptType = @ReceiptType,
+              dropdownValue = @DropdownValue,
+              secondDropdownValue = @SecondDropdownValue,
+              selectedRadio = @SelectedRadio
+          WHERE id = @Id;
+        `);
+
+      if (updateResult.rowsAffected[0] === 0) {
+        return res.status(404).json({ error: "Receipt not found" });
+      }
+
+      // Commit the transaction
+      await transaction.commit();
+
+      res.status(200).json({
+        message: "Receipt updated successfully!",
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction Error:", error);
+      res.status(500).json({ error: "Database transaction error" });
+    }
+  } catch (err) {
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  } finally {
+    sql.close();
+  }
+});
+
+app.delete("/api/receipts/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Use the connection pool
+    const pool = await poolPromise;
+
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      // Delete the receipt from tblReceipts
+      const deleteResult = await transaction.request()
+        .input("Id", sql.Int, id)
+        .query(`
+          DELETE FROM tblReceipts WHERE id = @Id;
+        `);
+
+      if (deleteResult.rowsAffected[0] === 0) {
+        return res.status(404).json({ error: "Receipt not found" });
+      }
+
+      // Commit the transaction
+      await transaction.commit();
+
+      res.status(200).json({
+        message: "Receipt deleted successfully!",
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction Error:", error);
+      res.status(500).json({ error: "Database transaction error" });
+    }
+  } catch (err) {
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  } finally {
+    sql.close();
+  }
+});
+
+
 
 // POST Route to Add a Donation
 app.post("/api/donations", async (req, res) => {
@@ -751,7 +877,7 @@ app.post("/api/donations", async (req, res) => {
 });
 
 
-
+// get for donations
 app.get('/api/donations', async (req, res) => {
   try {
     // Create a connection to the database
@@ -772,8 +898,58 @@ app.get('/api/donations', async (req, res) => {
   }
 });
 
+// PUT Route to Update a Donation
+app.put("/api/donations/:id", async (req, res) => {
+  const { id } = req.params; // Get the donation ID from the URL parameter
+  const { name, phoneNumber, reason, amount } = req.body;
+
+  if (!name || !phoneNumber || !reason || !amount) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Create connection to SQL Server using dbConfig
+    const pool = await sql.connect(dbConfig);
+
+    // Update the donation in the database
+    const result = await pool.request()
+      .input("id", sql.Int, id)
+      .input("name", sql.NVarChar, name)
+      .input("phoneNumber", sql.NVarChar, phoneNumber)
+      .input("reason", sql.NVarChar, reason)
+      .input("amount", sql.Float, amount)
+      .query(`
+        UPDATE tblDonations
+        SET name = @name, phoneNumber = @phoneNumber, reason = @reason, amount = @amount
+        WHERE id = @id;
+      `);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ message: "Donation not found." });
+    }
+
+    // Return success response if donation is updated
+    res.status(200).json({
+      message: "Donation updated successfully!",
+      donation: {
+        id,
+        name,
+        phoneNumber,
+        reason,
+        amount,
+      },
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  } finally {
+    sql.close();
+  }
+});
 
 
+
+//event post
 app.post("/api/events", async (req, res) => {
   const { name, date, organizer } = req.body;
 
@@ -830,6 +1006,49 @@ app.get("/api/events", async (req, res) => {
     sql.close();
   }
 });
+
+app.put("/api/events/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, date, organizer } = req.body;
+
+  if (!name || !date || !organizer) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Create connection to SQL Server using dbConfig
+    const pool = await sql.connect(dbConfig);
+
+    // Update the event in the database
+    const result = await pool.request()
+      .input("id", sql.Int, id)
+      .input("name", sql.NVarChar, name)
+      .input("date", sql.Date, date)
+      .input("organizer", sql.NVarChar, organizer)
+      .query(`
+        UPDATE tblEvents
+        SET name = @name, date = @date, organizer = @organizer
+        WHERE id = @id;
+      `);
+
+    // Check if any row was updated
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ message: "Event not found." });
+    }
+
+    res.status(200).json({
+      message: "Event updated successfully!",
+      event: { id, name, date, organizer },
+    });
+
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  } finally {
+    sql.close();
+  }
+});
+
 
 app.get("/api/top-donors", async (req, res) => {
   try {

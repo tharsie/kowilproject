@@ -38,6 +38,9 @@ const ReceiptTypeSettings = () => {
   const addReceiptType = async () => {
     // Validation
     let valid = true;
+    
+    // Log the newType to verify if it is correctly set
+    console.log("newType:", newType);
   
     if (!newType.trim()) {
       setNewTypeError("Receipt Type Name is required!");
@@ -46,47 +49,22 @@ const ReceiptTypeSettings = () => {
       setNewTypeError("");
     }
   
-    if (!newSequence.text.trim()) {
-      setNewSequenceError("Text part of sequence is required!");
-      valid = false;
-    } else {
-      setNewSequenceError("");
-    }
-  
-    if (!newSequence.number.trim()) {
-      setNewSequenceError("Number part of sequence is required!");
-      valid = false;
-    } else {
-      setNewSequenceError("");
-    }
-  
-    // Extract numeric part for sequence_num
-    const extractedNumber = parseInt(newSequence.number.replace(/\D/g, ""), 10); // Remove non-numeric characters
-  
-    if (isNaN(extractedNumber)) {
-      setNewSequenceError("Sequence must contain a valid number!");
-      valid = false;
-    } else {
-      setNewSequenceError("");
-    }
-  
-    if (priceType === "multiple" && prices.some((price) => price.trim() === "")) {
-      setPriceError("All price fields are required for multiple prices.");
-      valid = false;
-    } else {
-      setPriceError("");
-    }
+    // Validation for other fields
+    // ...
   
     if (!valid) return;
   
     // Prepare the data to send to the backend
     const receiptData = {
-      receiptTypeName: newType,
+      newType, // Make sure this is being set correctly
       price_type: priceType,
       sequence_txt: `${newSequence.text}-${newSequence.number}`, // Keep the original input (text + numbers)
-      sequence_num: extractedNumber, // Use only numbers for sequence_num
+      sequence_num: parseInt(newSequence.number.replace(/\D/g, ""), 10), // Use only numbers for sequence_num
       prices: priceType === "multiple" ? prices.map(price => parseFloat(price.trim())) : [], // Only send prices if priceType is "multiple"
     };
+  
+    // Log the data being sent
+    console.log("Receipt Data being sent to backend:", receiptData);
   
     try {
       // Send POST request to the backend
@@ -123,6 +101,8 @@ const ReceiptTypeSettings = () => {
       alert("Network error. Please try again.");
     }
   };
+  
+  
   
 
   const editReceiptType = () => {
@@ -283,12 +263,12 @@ const ReceiptTypeSettings = () => {
                   >
                     Edit
                   </button>
-                  <button
+                 {/*} <button
                     onClick={() => deleteReceiptType(type.receiptTypeName)}
                     className="bg-red-500 text-white px-2 py-1 rounded"
                   >
                     Delete
-                  </button>
+                  </button>*/}
                 </td>
               </tr>
             ))

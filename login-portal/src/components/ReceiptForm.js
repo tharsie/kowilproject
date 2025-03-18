@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toWords } from "number-to-words";
 import { jsPDF } from "jspdf";
 
-const ReceiptForm = ({ onSubmit }) => {
+const ReceiptForm = ({ onSubmit, initialData }) => {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [amountInWords, setAmountInWords] = useState("");
@@ -14,21 +14,41 @@ const ReceiptForm = ({ onSubmit }) => {
   const [receiptTypeName, setReceiptType] = useState("");
   const [errors, setErrors] = useState({});
 
+  // Load current date when the component mounts
   useEffect(() => {
     const currentDate = new Date().toISOString().split("T")[0];
     setDate(currentDate);
   }, []);
 
+  // Populate the form fields with initialData when it's provided (for editing)
+  useEffect(() => {
+    console.log("Initial Data:", initialData); // Debugging
+    if (initialData) {
+      setName(initialData.name || "");
+      setAmount(initialData.amount || "");
+      setAmountInWords(initialData.amountInWords || "");
+      setDate(initialData.date ? initialData.date.split("T")[0] : "");
+      setDropdownValue(initialData.dropdownValue || "");
+      setSecondDropdownValue(initialData.secondDropdownValue || "");
+      setSelectedRadio(initialData.selectedRadio || "");
+      setReceiptType(initialData.receiptTypeName || ""); // Check this value
+      console.log("Setting Receipt Type:", initialData.receiptTypeName);
+    }
+  }, [initialData]);
+  
+  
+
+  // Fetch the receipt types from the API
   useEffect(() => {
     const fetchReceiptTypes = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/receipt-types");
         console.log("Response status:", response.status);
-  
+
         if (response.ok) {
           const data = await response.json();
-          console.log("Fetched receipt types:", data); // Log the fetched data
-          setReceiptTypes(data); // Assuming data is an array
+          console.log("Fetched receipt types:", data);
+          setReceiptTypes(data);
         } else {
           console.error("Failed to fetch receipt types");
         }
@@ -36,10 +56,9 @@ const ReceiptForm = ({ onSubmit }) => {
         console.error("Error fetching receipt types:", error);
       }
     };
-  
+
     fetchReceiptTypes();
   }, []);
-  
 
   const handleAmountChange = (e) => {
     const value = e.target.value;
@@ -52,6 +71,13 @@ const ReceiptForm = ({ onSubmit }) => {
       setAmountInWords("");
     }
   };
+
+  useEffect(() => {
+    if (amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0) {
+      setAmountInWords(toWords(parseInt(amount, 10)) + " rupees");
+    }
+  }, [amount]);
+  
 
   const handleGeneratePDF = () => {
     const doc = new jsPDF();
@@ -72,8 +98,14 @@ const ReceiptForm = ({ onSubmit }) => {
 
     // Save the PDF
     doc.save(`${name}_receipt.pdf`);
-
   };
+
+  useEffect(() => {
+    if (receiptTypes.length > 0 && initialData?.receiptTypeName) {
+      setReceiptType(initialData.receiptTypeName);
+    }
+  }, [receiptTypes, initialData]);
+  
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -125,15 +157,18 @@ const ReceiptForm = ({ onSubmit }) => {
           onChange={(e) => setReceiptType(e.target.value)}
           className="border p-2 rounded w-full"
         >
-          <option value="" disabled>
-            Select Receipt Type
-          </option>
-          {receiptTypes.map((type, index) => (
-            <option key={index} value={type.receiptTypeName}>
-              {type.receiptTypeName}
-            </option>
-          ))}
+          <option value="" disabled>Select Receipt Type</option>
+          {receiptTypes.length === 0 ? (
+            <option value="" disabled>Loading...</option>
+          ) : (
+            receiptTypes.map((type, index) => (
+              <option key={index} value={type.receiptTypeName}>
+                {type.receiptTypeName}
+              </option>
+            ))
+          )}
         </select>
+
         {errors.receiptTypeName && <p className="text-red-500 text-sm">{errors.receiptTypeName}</p>}
       </div>
 

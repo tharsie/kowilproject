@@ -81,19 +81,23 @@ const EventDetails = () => {
 
   const editEvent = async () => {
     if (!validateForm()) return;
-
-    const updatedEvent = { ...currentEvent, name: eventName, date: eventDate, organizer };
-
+  
+    const updatedEvent = { name: eventName, date: eventDate, organizer };
+  
     try {
       const response = await fetch(`http://localhost:3000/api/events/${currentEvent.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedEvent),
       });
-
+  
       if (response.ok) {
-        setEvents(events.map((event) => (event.id === currentEvent.id ? updatedEvent : event)));
-        resetForm();
+        const updatedEvents = events.map((event) =>
+          event.id === currentEvent.id ? { ...event, ...updatedEvent } : event
+        );
+  
+        setEvents(updatedEvents); // Update state with edited event
+        resetForm(); // Close modal and reset form
       } else {
         console.error("Failed to update event");
       }
@@ -190,12 +194,12 @@ const EventDetails = () => {
                   >
                     Edit
                   </button>
-                  <button
+                  {/*<button
                     onClick={() => deleteEvent(event.id)}
                     className="bg-red-500 text-white px-2 py-1 rounded"
                   >
                     Delete
-                  </button>
+                  </button>*/}
                 </td>
               </tr>
             ))
