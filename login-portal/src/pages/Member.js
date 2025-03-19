@@ -222,7 +222,7 @@ const MemberPage = () => {
                 <th className="p-3 text-left">Last Name</th>
                 <th className="p-3 text-left">Phone</th>
                 <th className="p-3 text-left">Email</th>
-                <th className="p-3 text-left">Actions</th>
+                <th className="p-3 pl-[5%] text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -240,7 +240,7 @@ const MemberPage = () => {
                     <td className="p-3">{member.LastName}</td>
                     <td className="p-3">{member.PhoneNumber}</td>
                     <td className="p-3">{member.Email}</td>
-                    <td className="p-3 flex">
+                    <td className="p-3 flex pl-[19%]">
                       <button
                         onClick={() => handleEdit(member)}
                         className="px-3 py-1 bg-blue-500 text-white rounded-lg mr-2 hover:bg-blue-700"

@@ -111,7 +111,7 @@ const Receipt = () => {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto my-8 p-4 mt-[90px] bg-white shadow-md rounded-md">
+      <div className="w-full mx-auto my-8 p-4 mt-[90px] bg-white shadow-md rounded-md">
         <h1 className="text-2xl font-bold mb-6">Generate Receipt</h1>
 
         <button
@@ -143,42 +143,42 @@ const Receipt = () => {
 
         {receipts.length > 0 && (
           <div className="mt-8 overflow-x-auto">
-            <table className="table-auto w-full border-collapse border border-gray-200">
+            <table className="table-auto w-full ">
               <thead>
-                <tr>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                <tr className="bg-[#FD940012] h-[68px] rounded-lg">
+                  <th className="  p-3 text-left">
                     Receipt Type
                   </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                  <th className=" p-3 text-left">
                     Recipient's Name
                   </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                  <th className=" p-3 text-left">
                     Date
                   </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                  <th className=" p-3 text-left">
                     Receipt Amount (Numbers)
                   </th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">
+                  <th className=" p-3 text-left">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {receipts.map((receipt) => (
-                  <tr key={receipt.id} className="border-b border-gray-200">
-                    <td className="border border-gray-300 px-4 py-2">
+                  <tr key={receipt.id} className="">
+                    <td className=" p-3">
                       {receipt.receiptType}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className=" p-3">
                       {receipt.name}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className=" p-3">
                       {receipt.date}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className=" p-3">
                       {receipt.amount}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className=" p-3">
                       <button
                         onClick={() => handleEditClick(receipt)}
                         className="bg-blue-500 text-white py-1 px-4 rounded mr-2"

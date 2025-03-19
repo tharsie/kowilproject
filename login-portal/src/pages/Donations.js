@@ -119,25 +119,25 @@ const Donations = () => {
         )}
 
         {/* Donations List Table */}
-        <table className="table-auto w-full border-collapse border border-gray-300">
+        <table className="table-auto w-full border-collapse ">
           <thead>
-            <tr>
-              <th className="border px-4 py-2">Donator's Name</th>
-              <th className="border px-4 py-2">Phone Number</th>
-              <th className="border px-4 py-2">Reason</th>
-              <th className="border px-4 py-2">Amount</th>
-              <th className="border px-4 py-2">Actions</th>
+            <tr className="bg-[#FD940012] h-[68px] rounded-lg">
+              <th className=" p-3 text-left">Donator's Name</th>
+              <th className=" p-3 text-left">Phone Number</th>
+              <th className=" p-3 text-left">Reason</th>
+              <th className=" p-3 text-left">Amount</th>
+              <th className=" p-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredDonations.length > 0 ? (
               filteredDonations.map((donation) => (
                 <tr key={donation.id}>
-                  <td className="border px-4 py-2">{donation.name}</td>
-                  <td className="border px-4 py-2">{donation.phoneNumber}</td>
-                  <td className="border px-4 py-2">{donation.reason}</td>
-                  <td className="border px-4 py-2">{donation.amount}</td>
-                  <td className="border px-4 py-2">
+                  <td className=" p-3">{donation.name}</td>
+                  <td className="p-3">{donation.phoneNumber}</td>
+                  <td className=" p-3">{donation.reason}</td>
+                  <td className=" p-3">{donation.amount}</td>
+                  <td className=" p-3">
                     <button
                       onClick={() => handleEdit(donation)}
                       className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
