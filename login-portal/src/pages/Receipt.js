@@ -19,11 +19,13 @@ const Receipt = () => {
   }, []);
 
   const handleFormSubmit = (receiptData) => {
+    console.log("Submitting data to server:", receiptData); // Debugging log
+  
     const method = receiptToEdit ? "PUT" : "POST";
     const url = receiptToEdit
       ? `http://localhost:3000/api/receipts/${receiptToEdit.id}`
       : "http://localhost:3000/api/receipts";
-
+  
     fetch(url, {
       method: method,
       headers: {
@@ -31,13 +33,16 @@ const Receipt = () => {
       },
       body: JSON.stringify(receiptData),
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) {
-          throw new Error("Failed to save receipt");
+          const errorText = await response.text();
+          throw new Error(`Failed to save receipt: ${errorText}`);
         }
         return response.json();
       })
       .then((data) => {
+        console.log("Server response:", data); // Debugging log
+  
         if (receiptToEdit) {
           setReceipts((prevReceipts) =>
             prevReceipts.map((receipt) =>
@@ -51,9 +56,11 @@ const Receipt = () => {
         setReceiptToEdit(null);
       })
       .catch((error) => {
+        console.error("Error:", error);
         alert(`Error: ${error.message}`);
       });
   };
+  
 
   const handleEditClick = (receipt) => {
     setReceiptToEdit(receipt);

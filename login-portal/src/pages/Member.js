@@ -7,6 +7,7 @@ const MemberPage = () => {
   const [receipts, setReceipts] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [formData, setFormData] = useState({
+    title: "",
     firstName: "",
     lastName: "",
     dob: "",
@@ -92,6 +93,7 @@ const MemberPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form data:", formData);
 
     if (
       !formData.firstName ||
@@ -284,7 +286,7 @@ const MemberPage = () => {
           <h2 className="text-xl font-bold mb-4 text-center">{isEditing ? "Edit Member" : "Add Member"}</h2>
 
           <div className="flex space-x-4 mb-4">
-          <div className="w-1/7">
+          <div className="w-1/4">
             <label htmlFor="title" className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
             <select
               id="title"
@@ -300,7 +302,7 @@ const MemberPage = () => {
               <option value="Prof">Prof</option>
             </select>
             </div>
-            <div className="w-3/7">
+            <div className="w-2/4">
               <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
               <input
                 type="text"
@@ -313,7 +315,13 @@ const MemberPage = () => {
               />
             </div>
 
-            <div className="w-3/7">
+            
+          </div>
+
+          {/* gender & Last Name in a row */}
+          <div className="flex space-x-4 mb-4">
+
+          <div className="w-1/2">
               <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
               <input
                 type="text"
@@ -325,11 +333,24 @@ const MemberPage = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          </div>
+            {/* Gender Dropdown */}
+                <div className="w-1/2">
+                  <label htmlFor="gender" className="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              
 
-          {/* First Name & Last Name in a row */}
-          <div className="flex space-x-4 mb-4">
-            
           </div>
 
           {/* Phone Number & Email in a row */}

@@ -100,7 +100,7 @@ const DashboardOverview = () => {
       alert("Please fill in all required fields.");
       return;
     }
-
+  
     fetch("http://localhost:3000/api/receipts", {
       method: "POST",
       headers: {
@@ -110,7 +110,7 @@ const DashboardOverview = () => {
         name: selectedItem.userName,
         amount: selectedItem.price,
         date: selectedItem.date,
-        receiptType: selectedItem.receiptType,
+        receiptTypeName: selectedItem.receiptType,  // Updated field name to match backend
       }),
     })
       .then((response) => {
@@ -125,6 +125,7 @@ const DashboardOverview = () => {
         alert(`Error: ${error.message}`);
       });
   };
+  
 
   const handlePrintReceipt = () => {
     window.print();

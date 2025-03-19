@@ -637,38 +637,39 @@ app.put("/api/receipt-types/:id", async (req, res) => {
 //receipt post
 
 app.post("/api/receipts", async (req, res) => {
+  console.log("Incoming request body:", req.body); // Debugging log
+
   const {
     name,
     amount,
     amountInWords,
     date,
-    receiptType,
+    receiptTypeName,
     dropdownValue,
     secondDropdownValue,
     selectedRadio,
   } = req.body;
 
-  // Validate required fields
-  if (!name || (!amount && receiptType !== "அர்ச்சனை") || !date || !receiptType) {
-    return res.status(400).json({ error: "Name, Date, and Receipt Type are required. Amount is required unless Receipt Type is 'அர்ச்சனை'." });
+  if (!name || (!amount && receiptTypeName !== "அர்ச்சனை") || !date || !receiptTypeName) {
+    console.error("Validation failed:", req.body);
+    return res.status(400).json({
+      error: "Name, Date, and Receipt Type are required. Amount is required unless Receipt Type is 'அர்ச்சனை'.",
+    });
   }
 
   try {
-    // Use the connection pool
     const pool = await poolPromise;
-
     const transaction = new sql.Transaction(pool);
 
     try {
       await transaction.begin();
 
-      // Insert the receipt into tblReceipts
       const receiptResult = await transaction.request()
         .input("Name", sql.NVarChar(255), name)
-        .input("Amount", sql.Decimal(10,2), amount || null)
+        .input("Amount", sql.Decimal(10, 2), amount || null)
         .input("AmountInWords", sql.NVarChar(500), amountInWords || null)
         .input("Date", sql.Date, date)
-        .input("ReceiptType", sql.NVarChar(255), receiptType)
+        .input("ReceiptType", sql.NVarChar(255),receiptTypeName)
         .input("DropdownValue", sql.NVarChar(255), dropdownValue || null)
         .input("SecondDropdownValue", sql.NVarChar(255), secondDropdownValue || null)
         .input("SelectedRadio", sql.NVarChar(255), selectedRadio || null)
@@ -680,28 +681,22 @@ app.post("/api/receipts", async (req, res) => {
                   @DropdownValue, @SecondDropdownValue, @SelectedRadio);
         `);
 
-      const receiptId = receiptResult.recordset[0].id; // Get inserted ID
+      const receiptId = receiptResult.recordset[0].id;
+      console.log("Receipt successfully saved:", receiptId);
 
-      // Commit the transaction
       await transaction.commit();
-
-      res.status(201).json({
-        message: "Receipt added successfully!",
-        receiptId: receiptId,
-      });
+      res.status(201).json({ message: "Receipt added successfully!", receiptId });
     } catch (error) {
       await transaction.rollback();
       console.error("Transaction Error:", error);
-      res.status(500).json({ error: "Database transaction error" });
+      res.status(500).json({ error: "Database transaction error", details: error.message });
     }
   } catch (err) {
     console.error("Database Connection Error:", err);
-    res.status(500).json({ error: "Database connection failed" });
-  }
-  finally {
-    sql.close();
+    res.status(500).json({ error: "Database connection failed", details: err.message });
   }
 });
+
 
 
 
@@ -724,14 +719,14 @@ app.put("/api/receipts/:id", async (req, res) => {
     amount,
     amountInWords,
     date,
-    receiptType,
+    receiptTypeName,
     dropdownValue,
     secondDropdownValue,
     selectedRadio,
   } = req.body;
 
   // Validate required fields
-  if (!name || (!amount && receiptType !== "அர்ச்சனை") || !date || !receiptType) {
+  if (!name || (!amount && receiptTypeName !== "அர்ச்சனை") || !date || !receiptTypeName) {
     return res.status(400).json({ error: "Name, Date, and Receipt Type are required. Amount is required unless Receipt Type is 'அர்ச்சனை'." });
   }
 
@@ -751,7 +746,7 @@ app.put("/api/receipts/:id", async (req, res) => {
         .input("Amount", sql.Decimal(10, 2), amount || null)
         .input("AmountInWords", sql.NVarChar(500), amountInWords || null)
         .input("Date", sql.Date, date)
-        .input("ReceiptType", sql.NVarChar(255), receiptType)
+        .input("ReceiptType", sql.NVarChar(255), receiptTypeName)
         .input("DropdownValue", sql.NVarChar(255), dropdownValue || null)
         .input("SecondDropdownValue", sql.NVarChar(255), secondDropdownValue || null)
         .input("SelectedRadio", sql.NVarChar(255), selectedRadio || null)
@@ -1073,7 +1068,16 @@ app.get("/api/top-donors", async (req, res) => {
 app.get("/", (req, res) => {
   res.send("Server is running!");
 });
-
+process.on('SIGINT', async () => {
+  try {
+    await sql.close();
+    console.log('Connection pool closed');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error closing connection pool', err);
+    process.exit(1);
+  }
+});
 // Start the server
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");

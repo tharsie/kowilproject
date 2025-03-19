@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect  } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import addressbook1 from "../assets/address-book 1.svg"
 import addressbook2 from "../assets/address-book 2.svg"
@@ -11,10 +11,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // You can clear any user-related data here (e.g., tokens, user info)
-    localStorage.removeItem("authToken"); // Example: Remove auth token from local storage
-    navigate("/login"); // Navigate to the login page
+    localStorage.removeItem("authToken"); // Remove the authentication token
+    sessionStorage.clear(); // Clear session storage (if used)
+    
+    // Force a fresh page reload to clear cached data
+    navigate("/login", { replace: true });
+    window.location.reload();
   };
+  
+  useEffect(() => {
+    const handleBackButton = () => {
+      navigate("/login", { replace: true });
+    };
+  
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBackButton);
+  
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+    };
+  }, [navigate]);
+  
 
   return (
     <div className="flex min-h-screen ">
