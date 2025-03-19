@@ -37,9 +37,29 @@ const poolPromise = new sql.ConnectionPool(dbConfig)
   process.exit(1);
 });
 
+const authenticateToken = (req, res, next) => {
+  console.log("Token:", req);
+
+  const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Bearer
+ 
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+
+  jwt.verify(token, "defe3a1ad2e0036777934a2f131f39d31d770f384ad39d1ea1186a9252833102", (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: "Invalid token." });
+    }
+
+    // Attach user data to the request object
+    req.user = decoded;
+    next(); // Proceed to the next middleware or route handler
+  });
+};
+
 
 //adding members
-app.post("/api/members", async (req, res) => {
+app.post("/api/members",  async (req, res) => {
   const {
     title,
     firstName,
@@ -169,7 +189,7 @@ app.post("/api/members", async (req, res) => {
 
 // Route to fetch all members
 // Example: Using connection pool for fetching members and their addresses
-app.get("/api/members", async (req, res) => {
+app.get("/api/members", authenticateToken, async (req, res) => {
   try {
     // Get the pool object (ensure the pool is already initialized elsewhere in your app)
     const pool = await poolPromise;
@@ -505,7 +525,7 @@ app.post("/api/receipt-types", async (req, res) => {
 
 
 //get receipt type
-app.get("/api/receipt-types", async (req, res) => {
+app.get("/api/receipt-types",authenticateToken, async (req, res) => {
   try {
     // Use the connection pool
     const pool = await poolPromise;
@@ -635,7 +655,6 @@ app.put("/api/receipt-types/:id", async (req, res) => {
 
 
 //receipt post
-
 app.post("/api/receipts", async (req, res) => {
   console.log("Incoming request body:", req.body); // Debugging log
 
@@ -701,7 +720,7 @@ app.post("/api/receipts", async (req, res) => {
 
 
 //receipt get
-app.get("/api/receipts", async (req, res) => {
+app.get("/api/receipts",authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise; // Use the pool
     const result = await pool.request().query("SELECT * FROM tblReceipts");
@@ -873,7 +892,7 @@ app.post("/api/donations", async (req, res) => {
 
 
 // get for donations
-app.get('/api/donations', async (req, res) => {
+app.get('/api/donations',authenticateToken, async (req, res) => {
   try {
     // Create a connection to the database
     const pool = await sql.connect(dbConfig);
@@ -984,7 +1003,7 @@ app.post("/api/events", async (req, res) => {
 });
 
 // Route to fetch all events
-app.get("/api/events", async (req, res) => {
+app.get("/api/events",authenticateToken, async (req, res) => {
   try {
     // Create connection to SQL Server using dbConfig
     const pool = await sql.connect(dbConfig);
@@ -1045,7 +1064,7 @@ app.put("/api/events/:id", async (req, res) => {
 });
 
 
-app.get("/api/top-donors", async (req, res) => {
+app.get("/api/top-donors",authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
 

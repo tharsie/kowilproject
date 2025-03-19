@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
 import { toWords } from "number-to-words";
-import { jsPDF } from "jspdf";
+import { useEffect, useState } from "react";
 
 const ReceiptForm = ({ onSubmit, initialData }) => {
+  const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [amountInWords, setAmountInWords] = useState("");
@@ -22,8 +22,8 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
 
   // Populate the form fields with initialData when it's provided (for editing)
   useEffect(() => {
-    console.log("Initial Data:", initialData); // Debugging
     if (initialData) {
+      setId(initialData.id || "");
       setName(initialData.name || "");
       setAmount(initialData.amount || "");
       setAmountInWords(initialData.amountInWords || "");
@@ -31,23 +31,17 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
       setDropdownValue(initialData.dropdownValue || "");
       setSecondDropdownValue(initialData.secondDropdownValue || "");
       setSelectedRadio(initialData.selectedRadio || "");
-      setReceiptType(initialData.receiptTypeName || ""); // Check this value
-      console.log("Setting Receipt Type:", initialData.receiptTypeName);
+      setReceiptType(initialData.receiptTypeName || "");
     }
   }, [initialData]);
-  
-  
 
   // Fetch the receipt types from the API
   useEffect(() => {
     const fetchReceiptTypes = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/receipt-types");
-        console.log("Response status:", response.status);
-
         if (response.ok) {
           const data = await response.json();
-          console.log("Fetched receipt types:", data);
           setReceiptTypes(data);
         } else {
           console.error("Failed to fetch receipt types");
@@ -56,14 +50,12 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         console.error("Error fetching receipt types:", error);
       }
     };
-
     fetchReceiptTypes();
   }, []);
 
   const handleAmountChange = (e) => {
     const value = e.target.value;
     setAmount(value);
-
     if (value !== "" && !isNaN(parseFloat(value)) && parseFloat(value) > 0) {
       setAmountInWords(toWords(parseInt(value, 10)) + " rupees");
       setErrors((prev) => ({ ...prev, amount: "" })); // Clear error
@@ -77,39 +69,10 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
       setAmountInWords(toWords(parseInt(amount, 10)) + " rupees");
     }
   }, [amount]);
-  
 
-  const handleGeneratePDF = () => {
-    const doc = new jsPDF();
-
-    // Set up the PDF content
-    doc.setFontSize(16);
-    doc.text("Receipt", 20, 20);
-
-    doc.setFontSize(12);
-    doc.text(`Name: ${name}`, 20, 30);
-    doc.text(`Amount: ${amount}`, 20, 40);
-    doc.text(`Amount in Words: ${amountInWords}`, 20, 50);
-    doc.text(`Date: ${date}`, 20, 60);
-    doc.text(`Receipt Type: ${receiptTypeName}`, 20, 70);
-    doc.text(`Dropdown Value: ${dropdownValue}`, 20, 80);
-    doc.text(`Second Dropdown Value: ${secondDropdownValue}`, 20, 90);
-    doc.text(`Selected Radio Option: ${selectedRadio}`, 20, 100);
-
-    // Save the PDF
-    doc.save(`${name}_receipt.pdf`);
-  };
-
-  useEffect(() => {
-    if (receiptTypes.length > 0 && initialData?.receiptTypeName) {
-      setReceiptType(initialData.receiptTypeName);
-    }
-  }, [receiptTypes, initialData]);
-  
-
-  const handleFormSubmit = (e) => {
+  const handleSubmitChange = (e) => {
     e.preventDefault();
-    const requestPayload = {
+    onSubmit({
       name,
       amount,
       amountInWords,
@@ -118,39 +81,13 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
       dropdownValue,
       secondDropdownValue,
       selectedRadio,
-    };
-
-    const newErrors = {};
-
-    // Validate recipient's name
-    if (!name.trim()) {
-      newErrors.name = "Please enter the recipient's name.";
-    }
-
-    // Amount validation only for receiptType other than 'அர்ச்சனை'
-    if (receiptTypeName !== "அர்ச்சனை" && (amount === "" || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)) {
-      newErrors.amount = "Please enter a valid amount in numbers.";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Call onSubmit from parent
-    onSubmit(requestPayload);
-
-    // Generate PDF on submit
-    handleGeneratePDF();
-  };
+    })
+  }
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-4">
-      {/* Receipt Type */}
+    <form onSubmit={handleSubmitChange} className="space-y-4">
       <div>
-        <label htmlFor="receiptType" className="block text-lg font-medium">
-          Receipt Type
-        </label>
+        <label htmlFor="receiptType" className="block text-lg font-medium">Receipt Type</label>
         <select
           id="receiptType"
           value={receiptTypeName}
@@ -162,17 +99,13 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
             <option value="" disabled>Loading...</option>
           ) : (
             receiptTypes.map((type, index) => (
-              <option key={index} value={type.receiptTypeName}>
-                {type.receiptTypeName}
-              </option>
+              <option key={index} value={type.receiptTypeName}>{type.receiptTypeName}</option>
             ))
           )}
         </select>
-
         {errors.receiptTypeName && <p className="text-red-500 text-sm">{errors.receiptTypeName}</p>}
       </div>
 
-      {/* Recipient's Name */}
       <div>
         <label htmlFor="name" className="block text-lg font-medium">Recipient's Name</label>
         <input
@@ -186,7 +119,6 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
       </div>
 
-      {/* Amount Field - Hidden for "அர்ச்சனை" */}
       {receiptTypeName !== "அர்ச்சனை" && (
         <div>
           <label htmlFor="amount" className="block text-lg font-medium">Receipt Amount (Numbers)</label>
@@ -204,7 +136,6 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         </div>
       )}
 
-      {/* Amount in Words (Auto-Generated) */}
       {receiptTypeName !== "அர்ச்சனை" && (
         <div>
           <label htmlFor="amountInWords" className="block text-lg font-medium">Receipt Amount (In Words)</label>
@@ -218,7 +149,6 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         </div>
       )}
 
-      {/* Radio Buttons for "அர்ச்சனை" */}
       {receiptTypeName === "அர்ச்சனை" && (
         <div>
           <label className="block text-lg font-medium">Select amount of அர்ச்சனை</label>
@@ -239,7 +169,6 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         </div>
       )}
 
-      {/* Date */}
       <div>
         <label htmlFor="date" className="block text-lg font-medium">Date</label>
         <input
@@ -252,56 +181,41 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
         />
       </div>
 
-      {/* First Dropdown Before Submit - Show only for "அர்ச்சனை" */}
       {receiptTypeName === "அர்ச்சனை" && (
-        <div>
-          <label htmlFor="dropdown" className="block text-lg font-medium">Select Option</label>
-          <select
-            id="dropdown"
-            value={dropdownValue}
-            onChange={(e) => setDropdownValue(e.target.value)}
-            className="border p-2 rounded w-full"
-          >
-            <option value="">Select Rashi</option>
-            {[ 
-              "மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி",
-              "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"
-            ].map((option, index) => (
-              <option key={index} value={option}>{option}</option>
-            ))}
-          </select>
-        </div>
+        <>
+          <div>
+            <label htmlFor="dropdown" className="block text-lg font-medium">Select Option</label>
+            <select
+              id="dropdown"
+              value={dropdownValue}
+              onChange={(e) => setDropdownValue(e.target.value)}
+              className="border p-2 rounded w-full"
+            >
+              <option value="">Select Rashi</option>
+              {["மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி", "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"].map((option, index) => (
+                <option key={index} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="secondDropdown" className="block text-lg font-medium">Select Another Option</label>
+            <select
+              id="secondDropdown"
+              value={secondDropdownValue}
+              onChange={(e) => setSecondDropdownValue(e.target.value)}
+              className="border p-2 rounded w-full"
+            >
+              <option value="">Select Another Option</option>
+              {["Option 1", "Option 2", "Option 3"].map((option, index) => (
+                <option key={index} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+        </>
       )}
 
-      {/* Second Dropdown Before Submit - Show only for "அர்ச்சனை" */}
-      {receiptTypeName === "அர்ச்சனை" && (
-        <div>
-          <label htmlFor="secondDropdown" className="block text-lg font-medium">Select Another Option</label>
-          <select
-            id="secondDropdown"
-            value={secondDropdownValue}
-            onChange={(e) => setSecondDropdownValue(e.target.value)}
-            className="border p-2 rounded w-full"
-          >
-            <option value="">Select Nakshatram</option>
-            {[ 
-              "அசுவினி", "பரணி", "கார்த்திகை", "ரோகிணி", "மிருகசிரீஷம்",
-              "திருவாதிரை", "புனர்பூசம்", "பூசம்", "ஆயில்யம்", "மகம்", "பூரம்",
-              "உத்திரம்", "ஹஸ்தம்", "சித்திரை", "சுவாதி", "விசாகம்", "அனுஷம்",
-              "கேட்டை", "மூலம்", "பூராடம்"
-            ].map((option, index) => (
-              <option key={index} value={option}>{option}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Submit Button */}
-      <div className="text-center">
-        <button type="submit" className="bg-[#FD9400] text-white py-2 px-4 rounded w-full">
-          Generate Receipt
-        </button>
-      </div>
+      <button type="submit" className="bg-[#FD9400] text-white py-2 w-full px-4 rounded">Submit</button>
     </form>
   );
 };

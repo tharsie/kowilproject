@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useReceiptContext } from "../context/ReceiptContext"; // ✅ Correct import
+import toast, { Toaster } from 'react-hot-toast';
 
 const ReceiptTypeSettings = () => {
   const { receiptTypes, setReceiptTypes } = useReceiptContext();
@@ -20,11 +21,16 @@ const ReceiptTypeSettings = () => {
   useEffect(() => {
     const fetchReceiptTypes = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/receipt-types");
+        const response = await fetch("http://localhost:3000/api/receipt-types",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch receipt types");
         }
-
         const data = await response.json();
         setReceiptTypes(data);
       } catch (err) {
@@ -94,15 +100,13 @@ const ReceiptTypeSettings = () => {
       } else {
         const errorData = await response.json();
         console.error(errorData.error);
-        alert("Error adding receipt type: " + errorData.error);
+        toast.error("Error adding receipt type: " + errorData.error);
       }
     } catch (error) {
       console.error("Error connecting to backend:", error);
-      alert("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     }
   };
-  
-  
   
 
   const editReceiptType = () => {

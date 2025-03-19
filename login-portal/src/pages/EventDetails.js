@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast, { Toaster } from 'react-hot-toast';
 
 const EventDetails = () => {
   const [events, setEvents] = useState([]);
@@ -18,7 +19,13 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/events");
+        const response = await fetch("http://localhost:3000/api/events",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch events");
         }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) => {
   const [formData, setFormData] = useState({
@@ -40,14 +41,14 @@ const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) 
           formData
         );
         if (response.status === 200) {
-          alert('Donation updated successfully!');
+          toast.success('Donation updated successfully!');
           onUpdateDonation(response.data.donation); // Update the donations list in the parent component
         }
       } else {
         // If adding a new donation, send a POST request
         response = await axios.post('http://localhost:3000/api/donations', formData);
         if (response.status === 201) {
-          alert('Donation added successfully!');
+          toast.success('Donation added successfully!');
           onAddDonation(response.data.donation); // Update the donations list in the parent component
         }
       }
@@ -55,7 +56,7 @@ const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) 
       closeForm(); // Close the form after successful submission
     } catch (error) {
       console.error('Error submitting donation:', error);
-      alert('Failed to save donation. Please try again later.');
+      toast.error('Failed to save donation. Please try again later.');
     }
   };
 

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { jsPDF } from "jspdf";
+import { useEffect, useState } from "react";
+import toast from 'react-hot-toast';
 import ReceiptForm from "../components/ReceiptForm";
-import cart from "../assets/cart.svg";
 
 const Receipt = () => {
   const [receipts, setReceipts] = useState([]);
@@ -8,19 +9,41 @@ const Receipt = () => {
   const [receiptToEdit, setReceiptToEdit] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/receipts")
+    fetch("http://localhost:3000/api/receipts",{
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    })
       .then((response) => response.json())
       .then((data) => {
         setReceipts(data);
       })
       .catch((error) => {
-        alert(`Error fetching receipts: ${error.message}`);
+        toast.error(`Error fetching receipts: ${error.message}`);
       });
   }, []);
 
-  const handleFormSubmit = (receiptData) => {
-    console.log("Submitting data to server:", receiptData); // Debugging log
+  const handleGeneratePDF = (generatedId, data) => {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Receipt", 20, 20);
+      doc.setFontSize(12);
+      doc.text(`Receipt ID: ${generatedId}`, 20, 30);
+      doc.text(`Name: ${data.name}`, 20, 40);
+      doc.text(`Amount: ${data.amount}`, 20, 50);
+      doc.text(`Amount in Words: ${data.amountInWords}`, 20, 60);
+      doc.text(`Date: ${data.date}`, 20, 70);
+      doc.text(`Receipt Type: ${data.receiptTypeName}`, 20, 80);
+      doc.text(`Dropdown Value: ${data.dropdownValue}`, 20, 90);
+      doc.text(`Second Dropdown Value: ${data.secondDropdownValue}`, 20, 100);
+      doc.text(`Selected Radio Option: ${data.selectedRadio}`, 20, 110);
+      doc.save(`${data.name}_receipt.pdf`);
+    };
   
+
+  const handleFormSubmit = (receiptData) => {
     const method = receiptToEdit ? "PUT" : "POST";
     const url = receiptToEdit
       ? `http://localhost:3000/api/receipts/${receiptToEdit.id}`
@@ -41,25 +64,31 @@ const Receipt = () => {
         return response.json();
       })
       .then((data) => {
-        console.log("Server response:", data); // Debugging log
-  
         if (receiptToEdit) {
           setReceipts((prevReceipts) =>
             prevReceipts.map((receipt) =>
               receipt.id === data.id ? data : receipt
             )
           );
+          
+          toast.success("Receipt updated successfully! 🎉");
         } else {
           setReceipts((prevReceipts) => [...prevReceipts, data]);
+          handleGeneratePDF(data.receiptId, receiptData);
+          toast.success("Receipt added successfully! 🎉");
         }
+  
         setIsFormVisible(false);
         setReceiptToEdit(null);
       })
       .catch((error) => {
-        console.error("Error:", error);
-        alert(`Error: ${error.message}`);
+        toast.error(`Error: ${error.message}`);
       });
   };
+  
+  
+  
+
   
 
   const handleEditClick = (receipt) => {
@@ -80,7 +109,7 @@ const Receipt = () => {
         );
       })
       .catch((error) => {
-        alert(`Error: ${error.message}`);
+        toast.error(`Error: ${error.message}`);
       });
   };
 
@@ -127,10 +156,7 @@ const Receipt = () => {
               <h2 className="text-xl font-bold mb-4">
                 {receiptToEdit ? "Edit Receipt" : "Add New Receipt"}
               </h2>
-              <ReceiptForm
-                onSubmit={handleFormSubmit}
-                initialData={receiptToEdit}
-              />
+              <ReceiptForm onSubmit={handleFormSubmit} initialData={receiptToEdit} />
               <button
                 onClick={handleClosePopup}
                 className="mt-4 bg-red-500 w-full text-white py-2 px-4 rounded"
@@ -146,6 +172,9 @@ const Receipt = () => {
             <table className="table-auto w-full ">
               <thead>
                 <tr className="bg-[#FD940012] h-[68px] rounded-lg">
+                <th className="  p-3 text-left">
+                    ReceiptID
+                  </th>
                   <th className="  p-3 text-left">
                     Receipt Type
                   </th>
@@ -167,6 +196,9 @@ const Receipt = () => {
                 {receipts.map((receipt) => (
                   <tr key={receipt.id} className="">
                     <td className=" p-3">
+                      {receipt.id}
+                    </td>
+                    <td className=" p-3">
                       {receipt.receiptType}
                     </td>
                     <td className=" p-3">
@@ -181,7 +213,7 @@ const Receipt = () => {
                     <td className=" p-3">
                       <button
                         onClick={() => handleEditClick(receipt)}
-                        className="bg-blue-500 text-white py-1 px-4 rounded mr-2"
+                        className="border-2 rounded-3xl px-4 h-[35px] mt-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"
                       >
                         Edit
                       </button>

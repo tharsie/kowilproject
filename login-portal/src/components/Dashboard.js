@@ -11,12 +11,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // Remove the authentication token
+    localStorage.removeItem("token"); // Remove the authentication token
     sessionStorage.clear(); // Clear session storage (if used)
     
     // Force a fresh page reload to clear cached data
     navigate("/login", { replace: true });
-    window.location.reload();
+    // window.location.reload();
   };
   
   useEffect(() => {

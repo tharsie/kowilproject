@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DonationForm from "../components/DonationForm"; 
+import toast, { Toaster } from 'react-hot-toast';
 
 const Donations = () => {
   const [donations, setDonations] = useState([]); // Store all donations
@@ -13,11 +14,17 @@ const Donations = () => {
   useEffect(() => {
     const fetchDonations = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/donations");
+        const response = await axios.get("http://localhost:3000/api/donations",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         setDonations(response.data.donations);
       } catch (error) {
         console.error("Error fetching donations:", error);
-        alert("Failed to load donations.");
+        toast.error("Failed to load donations.");
       }
     };
 
@@ -27,11 +34,13 @@ const Donations = () => {
   // Function to add a new donation
   const handleAddDonation = (donation) => {
     setDonations([...donations, donation]);
+    
   };
 
   // Function to update a donation
   const handleUpdateDonation = (updatedDonation) => {
     setDonations(donations.map((d) => (d.id === updatedDonation.id ? updatedDonation : d)));
+    toast.success("Donation updated successfully! ✅");
   };
 
   // Function to handle editing a donation
@@ -126,7 +135,7 @@ const Donations = () => {
               <th className=" p-3 text-left">Phone Number</th>
               <th className=" p-3 text-left">Reason</th>
               <th className=" p-3 text-left">Amount</th>
-              <th className=" p-3 text-left">Actions</th>
+              <th className=" p-3 text-left pl-9">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -137,10 +146,10 @@ const Donations = () => {
                   <td className="p-3">{donation.phoneNumber}</td>
                   <td className=" p-3">{donation.reason}</td>
                   <td className=" p-3">{donation.amount}</td>
-                  <td className=" p-3">
+                  <td className=" p-3 pl-9">
                     <button
                       onClick={() => handleEdit(donation)}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+                      className="border-2 rounded-3xl px-4 h-[35px] mt-auto text-white w-[84px] bg-[#FD9400] hover:bg-[#FD8000]"
                     >
                       Edit
                     </button>

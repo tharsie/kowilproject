@@ -4,6 +4,7 @@ import Rect15 from "../assets/red-thread.png";
 import Rect12 from "../assets/Pongal.png";
 import Rect13 from "../assets/Petti-Kappu.jpeg";
 import Rect17 from "../assets/Rectangle17.png";
+import toast, { Toaster } from 'react-hot-toast';
 import Rect18 from "../assets/Rectangle13.png";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -20,7 +21,13 @@ const DashboardOverview = () => {
   useEffect(() => {
     const fetchTopDonors = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/top-donors");
+        const response = await fetch("http://localhost:3000/api/top-donors",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         if (!response.ok) throw new Error("Failed to fetch top donors");
         const data = await response.json();
         setTopDonors(data);
@@ -35,7 +42,13 @@ const DashboardOverview = () => {
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/events");
+        const response = await fetch("http://localhost:3000/api/events",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         if (!response.ok) throw new Error("Failed to fetch upcoming events");
         const data = await response.json();
         setUpcomingEvents(data);
@@ -49,7 +62,7 @@ const DashboardOverview = () => {
 
    const handleGeneratePDF = () => {
       if (!selectedItem.userName || !selectedItem.date) {
-        alert("Please enter your name before generating the receipt.");
+        toast.error("Please enter your name before generating the receipt.");
         return;
       }
   
@@ -97,7 +110,7 @@ const DashboardOverview = () => {
 
   const handleFormSubmit = () => {
     if (!selectedItem.userName || !selectedItem.date || !selectedItem.receiptType) {
-      alert("Please fill in all required fields.");
+      toast.error("Please fill in all required fields.");
       return;
     }
   
@@ -118,11 +131,11 @@ const DashboardOverview = () => {
         return response.json();
       })
       .then((data) => {
-        alert(`Receipt Generated! ID: ${data.receiptId}`);
+        toast.success(`Receipt Generated! ID: ${data.receiptId}`);
         handleGeneratePDF(); // Print receipt after generation
       })
       .catch((error) => {
-        alert(`Error: ${error.message}`);
+        toast.error(`Error: ${error.message}`);
       });
   };
   

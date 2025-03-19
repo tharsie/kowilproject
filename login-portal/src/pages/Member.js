@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FaShoppingCart, FaEdit, FaPrint } from "react-icons/fa";
 import cart from "../assets/cart.svg";
 import ReceiptForm from "../components/ReceiptForm";
+import toast, { Toaster } from 'react-hot-toast';
+import { useNavigate } from "react-router-dom";
 
 const MemberPage = () => {
   const [receipts, setReceipts] = useState([]);
@@ -23,7 +25,7 @@ const MemberPage = () => {
     country: "",
   });
   const [receiptType, setReceiptType] = useState(""); // Define state
-
+const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,9 +34,22 @@ const MemberPage = () => {
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/members");
+      const response = await fetch("http://localhost:3000/api/members",{
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+      });
       const data = await response.json();
-      setMembers(data);
+      if(response.status === 200){
+        setMembers(data||[]);
+      }else if(response.status === 401 || response.status === 403){
+        toast.error("Unauthorized Access");
+        navigate("/login", {replace: true});
+      }
+      console.log("Members:", data);
+     
     } catch (error) {
       console.error("Error fetching members:", error);
     }
@@ -44,11 +59,13 @@ const MemberPage = () => {
     fetchMembers();
   }, []);
 
-  const filteredMembers = members.filter((member) =>
-    `${member.FirstName} ${member.LastName}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
-  );
+  const filteredMembers = Array.isArray(members)
+  ? members.filter((member) =>
+      `${member?.FirstName} ${member?.LastName}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    )
+  : [];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +125,7 @@ const MemberPage = () => {
       !formData.postalCode ||
       !formData.country
     ) {
-      return alert("All fields are required");
+      return toast.error("All fields are required");
     }
 
     const url = isEditing
@@ -125,7 +142,7 @@ const MemberPage = () => {
       });
 
       if (response.ok) {
-        alert(isEditing ? "Member updated successfully!" : "Member added successfully!");
+        toast.success(isEditing ? "Member updated successfully!" : "Member added successfully!");
         fetchMembers();
         setIsModalOpen(false);
         setIsEditing(false);
@@ -146,10 +163,12 @@ const MemberPage = () => {
           country: "",
         });
       } else {
-        alert("An error occurred while processing your request.");
+        toast.error("An error occurred while processing your request.");
+
       }
     } catch (error) {
-      alert("An error occurred: " + error.message);
+      toast.error(`An error occurred: ${error.message}`);
+
     }
   };
 
@@ -168,13 +187,14 @@ const MemberPage = () => {
         return response.json();
       })
       .then((data) => {
-        alert(`Receipt generated successfully!`);
+        toast.success(`Receipt generated successfully!`);
         setReceipts((prevReceipts) => [...prevReceipts, receiptData]); // Add new receipt to the table
         setIsFormVisible(false); // Hide the form after submitting
         setShowReceipt(false);
       })
       .catch((error) => {
-        alert(`Error: ${error.message}`);
+        toast.error(`Error: ${error.message}`);
+
       });
   };
 
@@ -226,14 +246,14 @@ const MemberPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.length === 0 ? (
+              {filteredMembers?.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-3 text-center">
                     No members found
                   </td>
                 </tr>
               ) : (
-                filteredMembers.map((member) => (
+                filteredMembers?.map((member) => (
                   <tr key={member.MemberId}>
                     <td className="p-3">{member.Title}</td>
                     <td className="p-3">{member.FirstName}</td>
@@ -243,7 +263,7 @@ const MemberPage = () => {
                     <td className="p-3 flex pl-[19%]">
                       <button
                         onClick={() => handleEdit(member)}
-                        className="px-3 py-1 bg-blue-500 text-white rounded-lg mr-2 hover:bg-blue-700"
+                        className="border-2 rounded-3xl px-4 h-[35px] mt-auto text-white bg-[#FD9400] hover:bg-[#FD8000]"
                       >
                         <FaEdit />
                       </button>
