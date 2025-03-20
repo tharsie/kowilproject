@@ -28,7 +28,7 @@ const DashboardOverview = () => {
           return;
         }
 
-        const response = await axios.get("http://localhost:3000/api/top-donors", {
+        const response = await axios.get("http://api.pathirakali.org:3000/api/top-donors", {
           method: 'GET',
           headers: {
             "Content-Type": "application/json",

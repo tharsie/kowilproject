@@ -34,7 +34,7 @@ const MemberPage = () => {
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/members",{
+      const response = await fetch("http://api.pathirakali.org:3000/api/members",{
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -122,8 +122,8 @@ const MemberPage = () => {
     }
   
     const url = isEditing
-      ? `http://localhost:3000/api/members/${editMemberId}`
-      : "http://localhost:3000/api/members";
+      ? `http://api.pathirakali.org:3000/api/members/${editMemberId}`
+      : "http://api.pathirakali.org:3000/api/members";
   
     const method = isEditing ? "PUT" : "POST";
   
