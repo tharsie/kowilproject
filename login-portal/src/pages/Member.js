@@ -25,7 +25,7 @@ const MemberPage = () => {
     country: "",
   });
   const [receiptType, setReceiptType] = useState(""); // Define state
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +34,7 @@ const navigate = useNavigate();
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("http://api.pathirakali.org:3000/api/members",{
+      const response = await fetch("http://localhost:3000/api/members",{
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -111,36 +111,29 @@ const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form data:", formData);
-
+  
+    // Validate that only required fields are filled in
     if (
       !formData.firstName ||
       !formData.lastName ||
-      !formData.dob ||
-      !formData.gender ||
-      !formData.phoneNumber ||
-      !formData.email ||
-      !formData.street ||
-      !formData.city ||
-      !formData.state ||
-      !formData.postalCode ||
-      !formData.country
+      !formData.phoneNumber
     ) {
-      return toast.error("All fields are required");
+      return toast.error("First Name, Last Name, and Phone Number are required");
     }
-
+  
     const url = isEditing
-      ? `http://api.pathirakali.org:3000/api/members/${editMemberId}`
-      : "http://api.pathirakali.org:3000/api/members";
-
+      ? `http://localhost:3000/api/members/${editMemberId}`
+      : "http://localhost:3000/api/members";
+  
     const method = isEditing ? "PUT" : "POST";
-
+  
     try {
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
+  
       if (response.ok) {
         toast.success(isEditing ? "Member updated successfully!" : "Member added successfully!");
         fetchMembers();
@@ -164,13 +157,12 @@ const navigate = useNavigate();
         });
       } else {
         toast.error("An error occurred while processing your request.");
-
       }
     } catch (error) {
       toast.error(`An error occurred: ${error.message}`);
-
     }
   };
+  
 
   const handleFormSubmit = (receiptData) => {
     fetch("http://api.pathirakali.org:3000/api/receipts", {

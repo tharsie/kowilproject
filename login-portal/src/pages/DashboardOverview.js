@@ -28,7 +28,7 @@ const DashboardOverview = () => {
           return;
         }
 
-        const response = await axios.get("http://api.pathirakali.org:3000/api/top-donors", {
+        const response = await axios.get("http://localhost:3000/api/top-donors", {
           method: 'GET',
           headers: {
             "Content-Type": "application/json",
@@ -111,6 +111,10 @@ const DashboardOverview = () => {
     navigate("/dashboard/donations"); 
   };
 
+  const handleRedirect1 = () => {  
+    navigate("/dashboard/receipt"); 
+  };
+
   const handleRedirect3 = () => {  
     navigate("/dashboard/settings/event-details");
   };
@@ -160,7 +164,7 @@ const DashboardOverview = () => {
     { id: 1, name: "பழ அர்ச்சனை", price: 40, image: Rect11 },
     { id: 2, name: "பொங்கல்", price: 500, image: Rect12 },
     { id: 3, name: "நெய் விளக்கு", price: 40, image: Rect18 },
-    { id: 4, name: "காப்பு", price: 1000, image: Rect13 },
+    { id: 4, name: "பெட்டிக்காப்பு", price: 1000, image: Rect13 },
     { id: 5, name: "காப்பு", price: 500, image: Rect15 },
   ];
 
@@ -227,7 +231,7 @@ const DashboardOverview = () => {
         <div className="flex overflow-x-auto justify-between space-x-3.5 p-2">
           {items.map((item) => (
             <div key={item.id} className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
-              <img src={item.image} alt={item.name} className="w-full h-30 mb-2" />
+              <img src={item.image} alt={item.name} className="w-full h-30 mb-2 rounded-xl" />
               <h3 className="text-lg font-semibold">{item.name}</h3>
               <p className="text-base">LKR {item.price}.00</p>
               <button
@@ -239,7 +243,7 @@ const DashboardOverview = () => {
             </div>
           ))}
         </div>
-        <h1 className="-mt-0 text-lg text-[#FD9400] ml-[0] flex justify-end cursor-pointer z-10 font-semibold" onClick={handleRedirect3}>See more . . .</h1>
+        <h1 className="-mt-0 text-lg text-[#FD9400] ml-[0] flex justify-end cursor-pointer z-10 font-semibold" onClick={handleRedirect1}>See more . . .</h1>
       </div>
       {/* Top Donators and Events Section */}
       <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -248,9 +252,11 @@ const DashboardOverview = () => {
               <h1 className="text-2xl font-bold">Top Donators</h1>
               <div className="ml-[3%]">
                 {topDonors.length > 0 && (
-                  <div className="bg-white mt-5 w-[80%] pl-9 rounded-full h-1/6 flex justify-between pt-2">
-                    <img src={premiumpng} alt="Top Donor" className="w-8 -ml-7 h-8" />
-                    <p className="text-black relative font-bold -ml-[65%] z-10">{topDonors[0].name}</p>
+                  <div className="bg-white mt-5 w-[80%] pl-9 rounded-full h-1/6 flex justify-between pt-2 pb-2 items-center">
+                    <div className="details flex column items-center">
+                      <img src={premiumpng} alt="Top Donor" className="w-8 -ml-7 h-8" />
+                      <p className="text-black relative font-bold  z-10 pl-2.5">{topDonors[0].name}</p>
+                    </div>
                     <p className="text-black relative font-semibold mr-6 z-10">LKR {topDonors[0].totalDonated}</p>
                   </div>
                 )}

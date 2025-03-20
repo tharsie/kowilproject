@@ -38,7 +38,6 @@ const poolPromise = new sql.ConnectionPool(dbConfig)
 });
 
 const authenticateToken = (req, res, next) => {
-  console.log("Token:", req);
 
   const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Bearer
  
@@ -55,7 +54,6 @@ const authenticateToken = (req, res, next) => {
     next(); // Proceed to the next middleware or route handler
   });
 };
-
 
 //adding members
 app.post("/api/members",  async (req, res) => {
@@ -76,21 +74,14 @@ app.post("/api/members",  async (req, res) => {
 
   // Validate required fields
   if (
-    !title ||
+    
     !firstName ||
-    !lastName ||
-    !dob ||
-    !gender ||
-    !phoneNumber ||
-    !email ||
-    !street ||
-    !city ||
-    !state ||
-    !postalCode ||
-    !country
+    !lastName ||   
+    !phoneNumber
   ) {
     return res.status(400).json({ error: "All fields are required" });
   }
+
 
   try {
     // Get the pool object (ensure the pool is already initialized elsewhere in your app)
@@ -104,13 +95,13 @@ app.post("/api/members",  async (req, res) => {
 
       // Insert into tblMember and retrieve MemberId
       const memberResult = await transaction.request()
-        .input("Title", sql.NVarChar(50), title)
+        .input("Title", sql.NVarChar(50), title || null)
         .input("FirstName", sql.NVarChar(100), firstName)
         .input("LastName", sql.NVarChar(100), lastName)
-        .input("DOB", sql.Date, dob)
-        .input("Gender", sql.NVarChar(10), gender)
-        .input("PhoneNumber", sql.NVarChar(20), phoneNumber)
-        .input("Email", sql.NVarChar(100), email)
+        .input("DOB", sql.Date, dob || null)
+        .input("Gender", sql.NVarChar(10), gender || null)
+        .input("PhoneNumber", sql.NVarChar(20), phoneNumber || null)
+        .input("Email", sql.NVarChar(100), email || null)
         .input("IsEdit", sql.Int, 1)
         .input("IsActive", sql.Int, 1)
         .input("CreatedDate", sql.DateTime, new Date())
@@ -126,22 +117,25 @@ app.post("/api/members",  async (req, res) => {
         `);
 
       const memberId = memberResult.recordset[0].MemberId; // Get inserted MemberId
-
-      // Insert into tblAddress and retrieve AddressId
-      const addressResult = await transaction.request()
-        .input("Street", sql.NVarChar(255), street)
-        .input("City", sql.NVarChar(100), city)
-        .input("State", sql.NVarChar(100), state)
-        .input("PostalCode", sql.NVarChar(20), postalCode)
-        .input("Country", sql.NVarChar(100), country)
+      let addressId = null
+      if(!!(city || state || postalCode || country || street)) {
+        const addressResult = await transaction.request()
+        .input("Street", sql.NVarChar(255), street || null)
+        .input("City", sql.NVarChar(100), city || null)
+        .input("State", sql.NVarChar(100), state || null)
+        .input("PostalCode", sql.NVarChar(20), postalCode || null)
+        .input("Country", sql.NVarChar(100), country || null)
         .query(`
           INSERT INTO tblAddress (Street, City, State, PostalCode, Country)
           OUTPUT INSERTED.AddressId
           VALUES (@Street, @City, @State, @PostalCode, @Country);
         `);
 
-      const addressId = addressResult.recordset[0].AddressId; // Get inserted AddressId
+       addressId = addressResult.recordset[0].AddressId; // Get inserted AddressId
 
+      }
+      // Insert into tblAddress and retrieve AddressId
+    
       // Now update both tables with the corresponding foreign keys
       // Update tblMember with the AddressId
       await transaction.request()
@@ -225,7 +219,6 @@ app.get("/api/members", authenticateToken, async (req, res) => {
 
 // Route to update member details
 app.put("/api/members/:id", async (req, res) => {
-  console.log("Received data:", req.body); // Debugging request body
 
   const { id } = req.params;
   const {
@@ -245,18 +238,10 @@ app.put("/api/members/:id", async (req, res) => {
 
   // Check if all required fields are provided
   if (
-    !title ||
+    
     !firstName ||
     !lastName ||
-    !dob ||
-    !gender ||
-    !phoneNumber ||
-    !email ||
-    !street ||
-    !city ||
-    !state ||
-    !postalCode ||
-    !country
+    !phoneNumber
   ) {
     return res.status(400).json({ error: "All fields are required" });
   }
@@ -272,13 +257,13 @@ app.put("/api/members/:id", async (req, res) => {
       // Update tblMember details
       const memberResult = await transaction.request()
         .input("MemberId", sql.Int, id)
-        .input("Title", sql.NVarChar(50), title)
+        .input("Title", sql.NVarChar(50), title|| null)
         .input("FirstName", sql.NVarChar(100), firstName)
         .input("LastName", sql.NVarChar(100), lastName)
-        .input("DOB", sql.Date, dob)
-        .input("Gender", sql.NVarChar(10), gender)
+        .input("DOB", sql.Date, dob|| null)
+        .input("Gender", sql.NVarChar(10), gender|| null)
         .input("PhoneNumber", sql.NVarChar(20), phoneNumber)
-        .input("Email", sql.NVarChar(100), email)
+        .input("Email", sql.NVarChar(100), email|| null)
         .input("UpdatedDate", sql.DateTime, new Date())
         .input("UpdatedBy", sql.NVarChar(100), "Admin")
         .query(`
@@ -310,17 +295,18 @@ app.put("/api/members/:id", async (req, res) => {
         await transaction.rollback();
         return res.status(404).json({ error: "Address not found for this member" });
       }
-
-      const addressId = addressResult.recordset[0].AddressId;
+      let addressId = null
+       addressId = addressResult.recordset[0].AddressId || null;
 
       // Update tblAddress
-      await transaction.request()
-        .input("AddressId", sql.Int, addressId)
-        .input("Street", sql.NVarChar(255), street)
-        .input("City", sql.NVarChar(100), city)
-        .input("State", sql.NVarChar(100), state)
-        .input("PostalCode", sql.NVarChar(20), postalCode)
-        .input("Country", sql.NVarChar(100), country)
+      if(!!(city || state || postalCode || country || street) && addressId) {
+      await transaction.request() 
+      .input("AddressId", sql.Int, addressId|| null)       
+        .input("Street", sql.NVarChar(255), street|| null)
+        .input("City", sql.NVarChar(100), city|| null)
+        .input("State", sql.NVarChar(100), state|| null)
+        .input("PostalCode", sql.NVarChar(20), postalCode|| null)
+        .input("Country", sql.NVarChar(100), country|| null)
         .query(`
           UPDATE tblAddress
           SET Street = @Street,
@@ -330,7 +316,34 @@ app.put("/api/members/:id", async (req, res) => {
               Country = @Country
           WHERE AddressId = @AddressId;
         `);
+        }
+        else if(!!(city || state || postalCode || country || street)){
+          const addressResult = await transaction.request()
+          .input("Street", sql.NVarChar(255), street || null)
+          .input("City", sql.NVarChar(100), city || null)
+          .input("State", sql.NVarChar(100), state || null)
+          .input("PostalCode", sql.NVarChar(20), postalCode || null)
+          .input("Country", sql.NVarChar(100), country || null)
+          .query(`
+            INSERT INTO tblAddress (Street, City, State, PostalCode, Country)
+            OUTPUT INSERTED.AddressId
+            VALUES (@Street, @City, @State, @PostalCode, @Country);
+          `);
+  
+         addressId = addressResult.recordset[0].AddressId;
+         console.log("Address successfully saved:", addressId);
+         console.log("id:", id);
+         const  result =await transaction.request()
+         .input("id", sql.Int, id)
+         .input("AddressId", sql.Int, addressId)
+         .query(`
+           UPDATE tblMember
+           SET AddressId = @AddressId
+           WHERE MemberId = @id;
+         `);
 
+         
+        }
       // Commit the transaction
       await transaction.commit();
 
@@ -639,7 +652,6 @@ app.put("/api/receipt-types/:id", async (req, res) => {
 
 //receipt post
 app.post("/api/receipts", async (req, res) => {
-  console.log("Incoming request body:", req.body); // Debugging log
 
   const {
     name,
@@ -684,7 +696,6 @@ app.post("/api/receipts", async (req, res) => {
         `);
 
       const receiptId = receiptResult.recordset[0].id;
-      console.log("Receipt successfully saved:", receiptId);
 
       await transaction.commit();
       res.status(201).json({ message: "Receipt added successfully!", receiptId });
@@ -1037,7 +1048,7 @@ app.get("/api/top-donors",authenticateToken, async (req, res) => {
 
     const result = await pool.request().query(`
       SELECT TOP 4 name, SUM(amount) AS totalDonated
-      FROM tblReceipts
+      FROM tblDonations
       WHERE amount IS NOT NULL
       GROUP BY name
       ORDER BY totalDonated DESC

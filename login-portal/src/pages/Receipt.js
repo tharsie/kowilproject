@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import toast from 'react-hot-toast';
 import ReceiptForm from "../components/ReceiptForm";
 import { useNavigate } from "react-router-dom";
+import NotoSansTamilRegular from '../assets/NotoSansTamil-Regular.ttf';
 
 const Receipt = () => {
   const [receipts, setReceipts] = useState([]);
@@ -49,21 +50,28 @@ const Receipt = () => {
   }, [navigate]);
 
   const handleGeneratePDF = (generatedId, data) => {
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("Receipt", 20, 20);
-      doc.setFontSize(12);
-      doc.text(`Receipt ID: ${generatedId}`, 20, 30);
-      doc.text(`Name: ${data.name}`, 20, 40);
-      doc.text(`Amount: ${data.amount}`, 20, 50);
-      doc.text(`Amount in Words: ${data.amountInWords}`, 20, 60);
-      doc.text(`Date: ${data.date}`, 20, 70);
-      doc.text(`Receipt Type: ${data.receiptTypeName}`, 20, 80);
-      doc.text(`Dropdown Value: ${data.dropdownValue}`, 20, 90);
-      doc.text(`Second Dropdown Value: ${data.secondDropdownValue}`, 20, 100);
-      doc.text(`Selected Radio Option: ${data.selectedRadio}`, 20, 110);
-      doc.save(`${data.name}_receipt.pdf`);
-    };
+    const doc = new jsPDF();
+  
+    // Ensure you're using a font that supports Tamil text
+    doc.addFont('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@100..900&display=swap', 'NotoSansTamil', 'normal');
+    
+    doc.setFont("NotoSansTamil"); // Set the font to Noto Sans Tamil
+    
+    doc.setFontSize(16);
+    doc.text("Receipt", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Receipt ID: ${generatedId}`, 20, 30);
+    doc.text(`Name: ${data.name}`, 20, 40);
+    doc.text(`Amount: ${data.amount}`, 20, 50);
+    doc.text(`Amount in Words: ${data.amountInWords}`, 20, 60);
+    doc.text(`Date: ${data.date}`, 20, 70);
+    doc.text(`Receipt Type: ${data.receiptTypeName}`, 20, 80);
+    doc.text(`ராசி: ${data.dropdownValue}`, 20, 90);  // Tamil text
+    doc.text(`நட்சத்திரம்: ${data.secondDropdownValue}`, 20, 100);  // Tamil text
+    doc.text(`அர்ச்சனை: ${data.selectedRadio}`, 20, 110);  // Tamil text
+    
+    doc.save(`${data.name}_receipt.pdf`);
+  };
   
 
   const handleFormSubmit = (receiptData) => {
