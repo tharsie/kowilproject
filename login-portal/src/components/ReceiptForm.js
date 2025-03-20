@@ -39,7 +39,13 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
   useEffect(() => {
     const fetchReceiptTypes = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/receipt-types");
+        const response = await fetch("http://api.pathirakali.org:3000/api/receipt-types",{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setReceiptTypes(data);
@@ -162,7 +168,7 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
                   checked={selectedRadio === option}
                   onChange={(e) => setSelectedRadio(e.target.value)}
                 />
-                {` Price ${index + 1}`}
+                <span>{option}</span>
               </label>
             ))}
           </div>
@@ -191,7 +197,7 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
               onChange={(e) => setDropdownValue(e.target.value)}
               className="border p-2 rounded w-full"
             >
-              <option value="">Select Rashi</option>
+              <option value="">ராசி</option>
               {["மேஷம்", "ரிஷபம்", "மிதுனம்", "கடகம்", "சிம்மம்", "கன்னி", "துலாம்", "விருச்சிகம்", "தனுசு", "மகரம்", "கும்பம்", "மீனம்"].map((option, index) => (
                 <option key={index} value={option}>{option}</option>
               ))}
@@ -206,8 +212,10 @@ const ReceiptForm = ({ onSubmit, initialData }) => {
               onChange={(e) => setSecondDropdownValue(e.target.value)}
               className="border p-2 rounded w-full"
             >
-              <option value="">Select Another Option</option>
-              {["Option 1", "Option 2", "Option 3"].map((option, index) => (
+              <option value="">நட்சத்திரம்</option>
+              {["அசுவினி ", "பரணி ", "கிருத்திகை", "ரோகிணி ", "மிருகசீரிஷம் ", "திருவாதிரை ", "புனர்பூசம் ", "பூசம் ", "ஆயில்யம் ", 
+              "மகம் ", "பூரம் ", "உத்திரம் ", "அஸ்தம் ", "சித்திரை ", "சுவாதி ", "விசாகம் ", "அனுஷம் ", "கேட்டை ", "மூலம் ",
+               "பூராடம் ", "உத்திராடம் ", "திருவோணம் ", "அவிட்டம் ", "சதயம் ", "பூரட்டாதி ", "உத்திரட்டாதி ", "ரேவதி "].map((option, index) => (
                 <option key={index} value={option}>{option}</option>
               ))}
             </select>

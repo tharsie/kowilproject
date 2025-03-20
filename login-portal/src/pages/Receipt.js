@@ -2,28 +2,51 @@ import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import toast from 'react-hot-toast';
 import ReceiptForm from "../components/ReceiptForm";
+import { useNavigate } from "react-router-dom";
 
 const Receipt = () => {
   const [receipts, setReceipts] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [receiptToEdit, setReceiptToEdit] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/receipts",{
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setReceipts(data);
-      })
-      .catch((error) => {
+    const fetchReceipts = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Unauthorized Access: No token found");
+          navigate("/login", { replace: true });
+          return;
+        }
+  
+        const response = await fetch("http://api.pathirakali.org:3000/api/receipts", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            toast.error("Unauthorized Access");
+            navigate("/login", { replace: true });
+          } else {
+            throw new Error(`Failed to fetch receipts: ${response.statusText}`);
+          }
+          return;
+        }
+  
+        const data = await response.json();
+        setReceipts(data || []);
+      } catch (error) {
         toast.error(`Error fetching receipts: ${error.message}`);
-      });
-  }, []);
+      }
+    };
+  
+    fetchReceipts();
+  }, [navigate]);
 
   const handleGeneratePDF = (generatedId, data) => {
       const doc = new jsPDF();
@@ -46,8 +69,8 @@ const Receipt = () => {
   const handleFormSubmit = (receiptData) => {
     const method = receiptToEdit ? "PUT" : "POST";
     const url = receiptToEdit
-      ? `http://localhost:3000/api/receipts/${receiptToEdit.id}`
-      : "http://localhost:3000/api/receipts";
+      ? `http://api.pathirakali.org:3000/api/receipts/${receiptToEdit.id}`
+      : "http://api.pathirakali.org:3000/api/receipts";
   
     fetch(url, {
       method: method,
@@ -97,7 +120,7 @@ const Receipt = () => {
   };
 
   const handleDeleteClick = (id) => {
-    fetch(`http://localhost:3000/api/receipts/${id}`, {
+    fetch(`http://api.pathirakali.org:3000/api/receipts/${id}`, {
       method: "DELETE",
     })
       .then((response) => {

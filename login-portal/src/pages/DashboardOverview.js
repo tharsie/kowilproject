@@ -9,7 +9,7 @@ import Rect18 from "../assets/Rectangle13.png";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import premiumpng from "../assets/premium-quality 1.png";
-
+import axios from "axios";
 const DashboardOverview = () => {
   const navigate = useNavigate();
   const [topDonors, setTopDonors] = useState([]);
@@ -21,28 +21,40 @@ const DashboardOverview = () => {
   useEffect(() => {
     const fetchTopDonors = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/top-donors",{
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Unauthorized Access: No token found");
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        const response = await axios.get("http://api.pathirakali.org:3000/api/top-donors", {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) throw new Error("Failed to fetch top donors");
-        const data = await response.json();
-        setTopDonors(data);
+
+        setTopDonors(response.data || []);
       } catch (error) {
-        console.error("Error fetching top donors:", error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error("Unauthorized Access");
+          navigate("/login", { replace: true });
+        } else {
+          console.error("Error fetching top donors:", error);
+          toast.error("Failed to load top donors.");
+        }
       }
     };
 
     fetchTopDonors();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/events",{
+        const response = await fetch("http://api.pathirakali.org:3000/api/events",{
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -114,7 +126,7 @@ const DashboardOverview = () => {
       return;
     }
   
-    fetch("http://localhost:3000/api/receipts", {
+    fetch("http://api.pathirakali.org:3000/api/receipts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -212,7 +224,7 @@ const DashboardOverview = () => {
 
       {/* Product Cards */}
       <div className="bg-white p-0 mt-[80px] -ml-[41px] space-y-3">
-        <div className="flex overflow-x-auto space-x-3.5 p-2">
+        <div className="flex overflow-x-auto justify-between space-x-3.5 p-2">
           {items.map((item) => (
             <div key={item.id} className="p-2 rounded-lg border-2 h-[259px] w-[237px] flex flex-col">
               <img src={item.image} alt={item.name} className="w-full h-30 mb-2" />

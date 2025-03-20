@@ -34,7 +34,7 @@ const navigate = useNavigate();
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/members",{
+      const response = await fetch("http://api.pathirakali.org:3000/api/members",{
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -129,8 +129,8 @@ const navigate = useNavigate();
     }
 
     const url = isEditing
-      ? `http://localhost:3000/api/members/${editMemberId}`
-      : "http://localhost:3000/api/members";
+      ? `http://api.pathirakali.org:3000/api/members/${editMemberId}`
+      : "http://api.pathirakali.org:3000/api/members";
 
     const method = isEditing ? "PUT" : "POST";
 
@@ -173,7 +173,7 @@ const navigate = useNavigate();
   };
 
   const handleFormSubmit = (receiptData) => {
-    fetch("http://localhost:3000/api/receipts", {
+    fetch("http://api.pathirakali.org:3000/api/receipts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

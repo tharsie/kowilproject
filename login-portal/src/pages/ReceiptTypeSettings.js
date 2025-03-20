@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useReceiptContext } from "../context/ReceiptContext"; // ✅ Correct import
 import toast, { Toaster } from 'react-hot-toast';
+import { useNavigate } from "react-router-dom";
 
 const ReceiptTypeSettings = () => {
   const { receiptTypes, setReceiptTypes } = useReceiptContext();
@@ -17,22 +18,26 @@ const ReceiptTypeSettings = () => {
   const [newTypeError, setNewTypeError] = useState("");
   const [newSequenceError, setNewSequenceError] = useState("");
   const [priceError, setPriceError] = useState(""); // Added error state for price validation
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReceiptTypes = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/receipt-types",{
+        const response = await fetch("http://api.pathirakali.org:3000/api/receipt-types",{
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch receipt types");
-        }
         const data = await response.json();
-        setReceiptTypes(data);
+      if(response.status === 200){
+        setReceiptTypes(data||[]);
+      }else if(response.status === 401 || response.status === 403){
+        toast.error("Unauthorized Access");
+        navigate("/login", {replace: true});
+      }
+      console.log("Receipttypes:", data);
       } catch (err) {
         console.error("Error fetching receipt types:", err);
       }
@@ -74,7 +79,7 @@ const ReceiptTypeSettings = () => {
   
     try {
       // Send POST request to the backend
-      const response = await fetch("http://localhost:3000/api/receipt-types", {
+      const response = await fetch("http://api.pathirakali.org:3000/api/receipt-types", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

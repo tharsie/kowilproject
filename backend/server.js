@@ -16,9 +16,9 @@ const port = 3000;
 const dbConfig = {
   user: "KowilDb",
   password: "Welcome@2025",
-  server: "184.75.213.133",
-  database: "TestData",
-  port: 1623,
+  server: "108.60.219.162",
+  database: "TempleDB",
+  port: 9191,
   options: {
     encrypt: true,
     trustServerCertificate: true,
@@ -50,7 +50,6 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       return res.status(403).json({ error: "Invalid token." });
     }
-
     // Attach user data to the request object
     req.user = decoded;
     next(); // Proceed to the next middleware or route handler
@@ -181,8 +180,6 @@ app.post("/api/members",  async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
-  }finally {
-    sql.close();
   }
 });
 
@@ -221,8 +218,6 @@ app.get("/api/members", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Error fetching members:", err);
     res.status(500).json({ error: "Database error" });
-  }finally {
-    sql.close();
   }
 });
 
@@ -354,8 +349,6 @@ app.put("/api/members/:id", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
-  }finally {
-    sql.close();
   }
 });
 
@@ -401,8 +394,6 @@ app.post("/api/register", async (req, res) => {
   } catch (err) {
     console.error("Error during registration:", err);
     res.status(500).json({ error: "Database error!" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -438,8 +429,6 @@ app.post("/api/login", async (req, res) => {
   } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Internal server error" });
-  }finally {
-    sql.close();
   }
 });
 
@@ -516,8 +505,6 @@ app.post("/api/receipt-types", async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -551,8 +538,6 @@ app.get("/api/receipt-types",authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to fetch receipt types and sequences" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -648,8 +633,6 @@ app.put("/api/receipt-types/:id", async (req, res) => {
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database error" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -800,8 +783,6 @@ app.put("/api/receipts/:id", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -842,8 +823,6 @@ app.delete("/api/receipts/:id", async (req, res) => {
   } catch (err) {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Database connection failed" });
-  } finally {
-    sql.close();
   }
 });
 
@@ -885,8 +864,6 @@ app.post("/api/donations", async (req, res) => {
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -907,8 +884,6 @@ app.get('/api/donations',authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -956,8 +931,6 @@ app.put("/api/donations/:id", async (req, res) => {
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -997,8 +970,6 @@ app.post("/api/events", async (req, res) => {
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -1016,8 +987,6 @@ app.get("/api/events",authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -1058,8 +1027,6 @@ app.put("/api/events/:id", async (req, res) => {
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
-  } finally {
-    sql.close();
   }
 });
 
@@ -1097,7 +1064,8 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
+
 // Start the server
 app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+  console.log("Server running on http://api.pathirakali.org:3000");
 });

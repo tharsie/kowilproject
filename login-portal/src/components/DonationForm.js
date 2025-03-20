@@ -37,7 +37,7 @@ const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) 
       // If we are editing, send a PUT request
       if (donation) {
         response = await axios.put(
-          `http://localhost:3000/api/donations/${donation.id}`,
+          `http://api.pathirakali.org:3000/api/donations/${donation.id}`,
           formData
         );
         if (response.status === 200) {
@@ -46,7 +46,7 @@ const DonationForm = ({ onAddDonation, onUpdateDonation, closeForm, donation }) 
         }
       } else {
         // If adding a new donation, send a POST request
-        response = await axios.post('http://localhost:3000/api/donations', formData);
+        response = await axios.post('http://api.pathirakali.org:3000/api/donations', formData);
         if (response.status === 201) {
           toast.success('Donation added successfully!');
           onAddDonation(response.data.donation); // Update the donations list in the parent component

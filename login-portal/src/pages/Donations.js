@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DonationForm from "../components/DonationForm"; 
 import toast, { Toaster } from 'react-hot-toast';
+import { useNavigate } from "react-router-dom";
 
 const Donations = () => {
   const [donations, setDonations] = useState([]); // Store all donations
@@ -9,27 +10,41 @@ const Donations = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editMode, setEditMode] = useState(false); // Track edit mode
   const [currentDonation, setCurrentDonation] = useState(null); // Track the donation being edited
+  const navigate = useNavigate();
 
   // Fetch donations from backend
   useEffect(() => {
     const fetchDonations = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/donations",{
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Unauthorized Access: No token found");
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        const response = await axios.get("http://api.pathirakali.org:3000/api/donations", {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         });
-        setDonations(response.data.donations);
+
+        setDonations(response.data.donations || []);
       } catch (error) {
-        console.error("Error fetching donations:", error);
-        toast.error("Failed to load donations.");
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error("Unauthorized Access");
+          navigate("/login", { replace: true });
+        } else {
+          console.error("Error fetching donations:", error);
+          toast.error("Failed to load donations.");
+        }
       }
     };
 
     fetchDonations();
-  }, []);
+  }, [navigate]);
 
   // Function to add a new donation
   const handleAddDonation = (donation) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from 'react-hot-toast';
+import { useNavigate } from "react-router-dom";
 
 const EventDetails = () => {
   const [events, setEvents] = useState([]);
@@ -15,22 +16,26 @@ const EventDetails = () => {
   const [eventNameError, setEventNameError] = useState("");
   const [eventDateError, setEventDateError] = useState("");
   const [organizerError, setOrganizerError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/events",{
+        const response = await fetch("http://api.pathirakali.org:3000/api/events",{
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
         });
-        if (!response.ok) {
-          throw new Error("Failed to fetch events");
-        }
         const data = await response.json();
-        setEvents(data);
+      if(response.status === 200){
+        setEvents(data||[]);
+      }else if(response.status === 401 || response.status === 403){
+        toast.error("Unauthorized Access");
+        navigate("/login", {replace: true});
+      }
+      console.log("Members:", data);
       } catch (err) {
         console.error("Error fetching events:", err);
       }
@@ -68,7 +73,7 @@ const EventDetails = () => {
     const newEvent = { name: eventName, date: eventDate, organizer };
 
     try {
-      const response = await fetch("http://localhost:3000/api/events", {
+      const response = await fetch("http://api.pathirakali.org:3000/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newEvent),
@@ -92,7 +97,7 @@ const EventDetails = () => {
     const updatedEvent = { name: eventName, date: eventDate, organizer };
   
     try {
-      const response = await fetch(`http://localhost:3000/api/events/${currentEvent.id}`, {
+      const response = await fetch(`http://api.pathirakali.org:3000/api/events/${currentEvent.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedEvent),
@@ -115,7 +120,7 @@ const EventDetails = () => {
 
   const deleteEvent = async (eventId) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/events/${eventId}`, {
+      const response = await fetch(`http://api.pathirakali.org:3000/api/events/${eventId}`, {
         method: "DELETE",
       });
 
